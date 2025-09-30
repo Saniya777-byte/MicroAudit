@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.replace("Home")}
+        onPress={() => navigation.replace("Main")} 
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
@@ -39,27 +39,10 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    padding: 20, 
-    backgroundColor: "#fff" },
-
-  title: { fontSize: 24, 
-    fontWeight: "bold", 
-    marginBottom: 20 },
-
-  input: { width: "100%", 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    padding: 10, 
-    marginVertical: 8,
-    borderRadius: 8 },
-  button: { backgroundColor: "#007bff", 
-    padding: 15, 
-    borderRadius: 8, 
-    width: "100%", alignItems: "center", 
-    marginVertical: 10 },
+  container: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20, backgroundColor: "#fff" },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
+  input: { width: "100%", borderWidth: 1, borderColor: "#ccc", padding: 10, marginVertical: 8, borderRadius: 8 },
+  button: { backgroundColor: "#007bff", padding: 15, borderRadius: 8, width: "100%", alignItems: "center", marginVertical: 10 },
   buttonText: { color: "#fff", fontSize: 16 },
   link: { color: "#007bff", marginTop: 10 }
 });
