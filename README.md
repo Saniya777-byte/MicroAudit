@@ -12,13 +12,13 @@
 
 🚀 Problem Statement
 
-Small and medium-sized businesses often struggle to keep track of required documents, licenses, and compliance deadlines. Missing renewals or failing to maintain proper documentation can lead to:
+Small and medium-sized businesses often struggle to keep track of required documents, licenses, and compliance deadlines. Missing renewals or failing to maintain proper documentation can lead to:<br>  
 
-💸 Heavy fines
+💸 Heavy fines<br>  
 
-⚖️ Legal issues
+⚖️ Legal issues<br>  
 
-📉 Loss of credibility
+📉 Loss of credibility<br>  
 
 Currently, there is no simple and affordable system to automatically check, validate, and guide businesses in staying compliant.
 A single missed renewal or incorrect document can lead to crippling fines, legal complications, and a devastating loss of business credibility. Existing solutions are often complex, expensive, or not tailored for the needs of small entrepreneurs.
@@ -26,45 +26,45 @@ A single missed renewal or incorrect document can lead to crippling fines, legal
 💡 Proposed Solution
 
 MicroAudit is a mobile-first application that empowers small business owners by:
-✅ Allowing users to scan or upload documents
-✅ Extracting important details with AI-powered OCR
-✅ Automatically checking compliance rules
-✅ Sending renewal reminders & alerts
-✅ Guiding entrepreneurs with required licenses & documents based on business type
+✅ Allowing users to scan or upload documents<br>  
+✅ Extracting important details with AI-powered OCR<br>  
+✅ Automatically checking compliance rules<br>  
+✅ Sending renewal reminders & alerts<br>  
+✅ Guiding entrepreneurs with required licenses & documents based on business type<br>  
 
 This makes compliance easy, affordable, and stress-free for entrepreneurs and shopkeepers.
 
 From providing a clear roadmap of required licenses for a new cafe to sending timely renewal alerts for an existing shop, MicroAudit is the all-in-one compliance partner for every small business.
 
 🚀 Key Features
-📄 Document Scanning & Uploading: Digitize your important documents in seconds using your mobile camera or by uploading files directly.
+📄 Document Scanning & Uploading: Digitize your important documents in seconds using your mobile camera or by uploading files directly.<br>  
 
-🤖 AI-Powered OCR Extraction: Our intelligent OCR (Optical Character Recognition) engine automatically reads and extracts key details like expiry dates, license numbers, and entity names from your documents.
+🤖 AI-Powered OCR Extraction: Our intelligent OCR (Optical Character Recognition) engine automatically reads and extracts key details like expiry dates, license numbers, and entity names from your documents.<br>  
 
-✅ Automatic Compliance Checks: The app cross-references your documents against a regularly updated database of rules and regulations specific to your business type and location.
+✅ Automatic Compliance Checks: The app cross-references your documents against a regularly updated database of rules and regulations specific to your business type and location.<br>  
 
-🗺️ Personalized Guidance System: Are you starting a new business? MicroAudit provides a personalized checklist of all the documents and licenses you need, taking the guesswork out of getting started.
+🗺️ Personalized Guidance System: Are you starting a new business? MicroAudit provides a personalized checklist of all the documents and licenses you need, taking the guesswork out of getting started.<br>  
 
-🔔 Smart Renewal Reminders: Receive timely alerts and push notifications well before your important documents are due for renewal, giving you ample time to act.
+🔔 Smart Renewal Reminders: Receive timely alerts and push notifications well before your important documents are due for renewal, giving you ample time to act.<br>  
 
-📊 Progress Tracking Dashboard: A clear and simple dashboard shows you which documents are compliant, which are expiring soon, and which are still pending.
+📊 Progress Tracking Dashboard: A clear and simple dashboard shows you which documents are compliant, which are expiring soon, and which are still pending.<br>  
 
 🎯 Target Audience
-Small Business Owners
+Small Business Owners<br>  
 
-Entrepreneurs & Startups
+Entrepreneurs & Startups<br>  
 
-Local Shopkeepers & Service Providers (e.g., cafes, salons, consultants)
+Local Shopkeepers & Service Providers (e.g., cafes, salons, consultants)<br>  
 
-🎯 Expected Outcome
+🎯 Expected Outcome<br>  
 
-A functional mobile app where business owners can:
-✔️ Scan & manage documents
-✔️ Receive compliance status reports
-✔️ Get renewal reminders
-✔️ Know exactly what licenses are required
+A functional mobile app where business owners can:<br>  
+✔️ Scan & manage documents<br>  
+✔️ Receive compliance status reports<br>  
+✔️ Get renewal reminders<br>  
+✔️ Know exactly what licenses are required<br>  
 
-👉 This reduces risks of fines, penalties, and legal issues by ensuring compliance is never missed.
+👉 This reduces risks of fines, penalties, and legal issues by ensuring compliance is never missed.<br>  
 
 ## 🛠️ Technology Stack  
 
@@ -85,11 +85,11 @@ A functional mobile app where business owners can:
 | **5–6** | OCR API integration & document scanning |
 | **7**   | Implement guidance & reminder features  |
 | **8**   | Testing & deployment                    |
-
+<br>  
 🏁 Expected Outcome
 The final product will be a fully functional mobile application that serves as a reliable compliance manager for small businesses. By automating document tracking and providing clear guidance, MicroAudit will significantly reduce the administrative burden on entrepreneurs, lower the risk of fines and legal penalties, and help businesses maintain a strong, credible reputation.
-
+<br>  
 👨‍💻 Author
-Saniya Jabbar Khatik – 2024-B-20072005
-🔗 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Saniya777-byte)  
-🔗 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/saniya-khatik-501205350/)  
+Saniya Jabbar Khatik – 2024-B-20072005<br>  
+🔗 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Saniya777-byte)  <br>  
+🔗 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/saniya-khatik-501205350/)  <br>  
