@@ -10,13 +10,29 @@
 </p>
 </div>
 
-🧐 Problem Statement
-For small and medium-sized businesses, navigating the maze of compliance is a constant challenge. Keeping track of required documents, licenses, and crucial deadlines is a manual and error-prone process.
+🚀 Problem Statement
 
+Small and medium-sized businesses often struggle to keep track of required documents, licenses, and compliance deadlines. Missing renewals or failing to maintain proper documentation can lead to:
+
+💸 Heavy fines
+
+⚖️ Legal issues
+
+📉 Loss of credibility
+
+Currently, there is no simple and affordable system to automatically check, validate, and guide businesses in staying compliant.
 A single missed renewal or incorrect document can lead to crippling fines, legal complications, and a devastating loss of business credibility. Existing solutions are often complex, expensive, or not tailored for the needs of small entrepreneurs.
 
-✨ Proposed Solution: Introducing MicroAudit
-MicroAudit is a smart mobile assistant designed to empower small business owners. It simplifies compliance and document management through an intuitive, AI-powered mobile application. Our app allows entrepreneurs to scan, manage, and track their essential business documents effortlessly, ensuring they never miss a critical deadline again.
+💡 Proposed Solution
+
+MicroAudit is a mobile-first application that empowers small business owners by:
+✅ Allowing users to scan or upload documents
+✅ Extracting important details with AI-powered OCR
+✅ Automatically checking compliance rules
+✅ Sending renewal reminders & alerts
+✅ Guiding entrepreneurs with required licenses & documents based on business type
+
+This makes compliance easy, affordable, and stress-free for entrepreneurs and shopkeepers.
 
 From providing a clear roadmap of required licenses for a new cafe to sending timely renewal alerts for an existing shop, MicroAudit is the all-in-one compliance partner for every small business.
 
@@ -40,29 +56,40 @@ Entrepreneurs & Startups
 
 Local Shopkeepers & Service Providers (e.g., cafes, salons, consultants)
 
-🛠️ Technology Stack
-Area	Technology
-Mobile App	<img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" /> or <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
-Backend	<img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" /> & <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" />
-Database	<img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" /> or <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
-AI / OCR	<img src="https://img.shields.io/badge/Google_Cloud_Vision_API-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" /> or <img src="https://img.shields.io/badge/AWS_Textract-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" />
-Hosting	<img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" /> or <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" />
+🎯 Expected Outcome
 
-Export to Sheets
-🗓️ Project Timeline & Roadmap
-Week	Status	Key Tasks
-1–2	⚪ To Do	Research Compliance Rules & Design UI/UX Mockups
-3–4	⚪ To Do	Backend Setup, API Development & Database Schema Design
-5–6	⚪ To Do	Integrate OCR API & Implement Document Scanning Module
-7	⚪ To Do	Implement Guidance Engine & Reminder Notification System
-8	⚪ To Do	End-to-End Testing, Bug Fixing & Deployment
+A functional mobile app where business owners can:
+✔️ Scan & manage documents
+✔️ Receive compliance status reports
+✔️ Get renewal reminders
+✔️ Know exactly what licenses are required
 
-Export to Sheets
+👉 This reduces risks of fines, penalties, and legal issues by ensuring compliance is never missed.
+
+## 🛠️ Technology Stack  
+
+| Area        | Technology |
+|-------------|------------|
+| **Mobile App** | <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" /> or <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" /> |
+| **Backend** | <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" /> & <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" /> |
+| **Database** | <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" /> or <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" /> |
+| **AI / OCR** | <img src="https://img.shields.io/badge/Google_Cloud_Vision_API-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" /> or <img src="https://img.shields.io/badge/AWS_Textract-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" /> |
+| **Hosting** | <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" /> or <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" /> |
+
+
+📅 Project Timeline
+| Week    | Task                                    |
+| ------- | --------------------------------------- |
+| **1–2** | Research compliance rules & design UI   |
+| **3–4** | Backend setup & database design         |
+| **5–6** | OCR API integration & document scanning |
+| **7**   | Implement guidance & reminder features  |
+| **8**   | Testing & deployment                    |
+
 🏁 Expected Outcome
 The final product will be a fully functional mobile application that serves as a reliable compliance manager for small businesses. By automating document tracking and providing clear guidance, MicroAudit will significantly reduce the administrative burden on entrepreneurs, lower the risk of fines and legal penalties, and help businesses maintain a strong, credible reputation.
 
 👨‍💻 Author
 Saniya Jabbar Khatik – 2024-B-20072005
-
-GitHub
-LinkedIn
+🔗 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Saniya777-byte)  
+🔗 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/saniya-khatik-501205350/)  
