@@ -1,5 +1,4 @@
 <div align="center">
-<img src="https://i.imgur.com/uQdG1jB.png" alt="MicroAudit Logo" width="150"/>
 <h1>MicroAudit</h1>
 <p><strong>Smart Business Compliance & Document Guidance</strong></p>
 <p><i>Stay Compliant, Stay Confident.</i></p>
