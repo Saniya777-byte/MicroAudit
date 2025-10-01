@@ -89,7 +89,4 @@ A functional mobile app where business owners can:<br>
 🏁 Expected Outcome
 The final product will be a fully functional mobile application that serves as a reliable compliance manager for small businesses. By automating document tracking and providing clear guidance, MicroAudit will significantly reduce the administrative burden on entrepreneurs, lower the risk of fines and legal penalties, and help businesses maintain a strong, credible reputation.
 <br>  
-👨‍💻 Author
-Saniya Jabbar Khatik – 2024-B-20072005<br>  
-🔗 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Saniya777-byte)  
-🔗 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/saniya-khatik-501205350/)   
+  
