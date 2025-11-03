@@ -2,6 +2,7 @@
   "expo": {
     "name": "MicroAudit",
     "slug": "MicroAudit",
+    "scheme": "microaudit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,6 +26,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "supabaseUrl": "https://fddgwkdqkogwhjxqnndv.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZGd3a2Rxa29nd2hqeHFubmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzA4ODYsImV4cCI6MjA3Nzc0Njg4Nn0.Cwzarx2XfVS6qxo4JtyGxKEugoXtoy4xmsSgDXEOVYo"
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }
