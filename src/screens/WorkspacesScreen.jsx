@@ -42,9 +42,9 @@ export default function WorkspacesScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Workspaces</Text>
-        <View style={{ flexDirection: "row", gap: 12 }}>
+        <View style={{ flexDirection: "row" }}>
           <TouchableOpacity onPress={() => setSheetOpen(true)}><Plus color={colors.text} /></TouchableOpacity>
-          <TouchableOpacity><MoreVertical color={colors.text} /></TouchableOpacity>
+          <TouchableOpacity style={{ marginLeft: 12 }}><MoreVertical color={colors.text} /></TouchableOpacity>
         </View>
       </View>
 
@@ -66,7 +66,7 @@ export default function WorkspacesScreen({ navigation }) {
       </View>
 
       {/* List */}
-      <ScrollView contentContainerStyle={{ padding: spacing.md, gap: 12 }}>
+      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
         {list.map((w) => {
           const IconCmp = Icons[w.icon || "Folder"] || Icons.Folder;
           const progress = w.total ? Math.round((w.done / w.total) * 100) : 0;
@@ -135,14 +135,14 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: spacing.md, paddingVertical: spacing.md, backgroundColor: colors.surface, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   title: { fontSize: fonts.h1, fontWeight: "800", color: colors.text },
-  searchWrap: { margin: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.surface, borderRadius: 9999, height: 44, flexDirection: "row", alignItems: "center", gap: 8, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
-  search: { flex: 1, height: 44, color: colors.text },
-  wsCard: { borderRadius: 16, padding: spacing.md, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  wsHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  searchWrap: { margin: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.surface, borderRadius: 9999, height: 44, flexDirection: "row", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6, elevation: 1 },
+  search: { flex: 1, height: 44, color: colors.text, marginLeft: 8 },
+  wsCard: { borderRadius: 16, padding: spacing.md, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, marginBottom: 12 },
+  wsHeader: { flexDirection: "row", alignItems: "center" },
   wsIconBox: { width: 28, height: 28, borderRadius: 8, backgroundColor: "#FFFFFFAA", alignItems: "center", justifyContent: "center" },
-  wsTitle: { fontWeight: "800", color: "#111827" },
+  wsTitle: { fontWeight: "800", color: "#111827", marginLeft: 10 },
   wsSub: { color: "#374151", marginTop: 6 },
-  wsFooter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  wsFooter: { flexDirection: "row", alignItems: "center", marginTop: 10 },
   wsTime: { color: "#374151", fontSize: 12 },
   fab: { position: "absolute", right: 20, bottom: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", elevation: 6 },
   sheetBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.2)" },
@@ -151,11 +151,11 @@ const styles = StyleSheet.create({
   sheetTitle: { fontWeight: "800", marginBottom: spacing.md },
   label: { color: colors.muted, marginTop: spacing.sm },
   input: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, padding: 10, marginTop: 6 },
-  iconRow: { flexDirection: "row", gap: 8, marginTop: 6 },
-  iconPick: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center" },
+  iconRow: { flexDirection: "row", marginTop: 6 },
+  iconPick: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center", marginRight: 8 },
   iconActive: { borderWidth: 2, borderColor: colors.primary },
-  colorRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 6 },
-  colorDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: "#E5E7EB" },
+  colorRow: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
+  colorDot: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: "#E5E7EB", marginRight: 10, marginBottom: 10 },
   colorActive: { borderColor: colors.primary, borderWidth: 2 },
   createBtn: { marginTop: spacing.md, backgroundColor: colors.primary, padding: 12, borderRadius: 12, alignItems: "center" },
 });

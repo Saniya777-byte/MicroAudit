@@ -59,13 +59,13 @@ export default function WorkspaceDetail({ route, navigation }) {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: workspace.color }]}> 
         <TouchableOpacity onPress={() => navigation.goBack()}><ArrowLeft color="#111827" /></TouchableOpacity>
-        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
           <View style={styles.wsIconBox}><IconCmp size={18} color="#111827" /></View>
-          <Text style={styles.headerTitle} numberOfLines={1}>{workspace.title}</Text>
+          <Text style={[styles.headerTitle, { marginLeft: 8 }]} numberOfLines={1}>{workspace.title}</Text>
         </View>
-        <View style={{ flexDirection: "row", gap: 12 }}>
+        <View style={{ flexDirection: "row" }}>
           <TouchableOpacity><Edit3 color="#111827" /></TouchableOpacity>
-          <TouchableOpacity><MoreVertical color="#111827" /></TouchableOpacity>
+          <TouchableOpacity style={{ marginLeft: 12 }}><MoreVertical color="#111827" /></TouchableOpacity>
         </View>
       </View>
 
@@ -134,9 +134,9 @@ export default function WorkspaceDetail({ route, navigation }) {
             </TouchableOpacity>
           ))}
         </View>
-        <View style={{ gap: 8, marginTop: 8 }}>
+        <View style={{ marginTop: 8 }}>
           {mockResources.links.map(l => (
-            <TouchableOpacity key={l.id} style={styles.linkCard} onPress={() => Linking.openURL(l.url)}>
+            <TouchableOpacity key={l.id} style={[styles.linkCard, { marginTop: 8 }]} onPress={() => Linking.openURL(l.url)}>
               <LinkIcon size={16} color={colors.muted} />
               <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>{l.title}</Text>
             </TouchableOpacity>
@@ -145,9 +145,9 @@ export default function WorkspaceDetail({ route, navigation }) {
 
         {/* Checklist */}
         <SectionHeader title="Tasks / Checklist" />
-        <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: spacing.md, gap: 10 }}>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: spacing.md }}>
           {tasks.map(t => (
-            <TouchableOpacity key={t.id} style={styles.taskRow} onPress={() => toggleTask(t.id)}>
+            <TouchableOpacity key={t.id} style={[styles.taskRow, { marginBottom: 10 }]} onPress={() => toggleTask(t.id)}>
               {t.done ? <CheckCircle2 size={18} color="#16A34A" /> : <Circle size={18} color="#9CA3AF" />}
               <Text style={[styles.taskText, t.done && { textDecorationLine: "line-through", color: "#6B7280" }]}>{t.title}</Text>
             </TouchableOpacity>
@@ -167,9 +167,9 @@ export default function WorkspaceDetail({ route, navigation }) {
               {a.icon === "note" && <StickyNote size={16} color={colors.muted} />}
               {a.icon === "task" && <CheckCircle2 size={16} color={colors.muted} />}
               <Text style={{ marginLeft: 8, flex: 1 }}>{a.text}</Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Clock size={14} color={colors.muted} />
-                <Text style={{ color: colors.muted, fontSize: 12 }}>{a.time}</Text>
+                <Text style={{ color: colors.muted, fontSize: 12, marginLeft: 6 }}>{a.time}</Text>
               </View>
             </View>
           ))}
@@ -217,18 +217,18 @@ const styles = StyleSheet.create({
   ovNumber: { fontWeight: "800", fontSize: 18 },
   ovLabel: { color: "#6B7280" },
   pinCard: { width: 140, borderRadius: 16, padding: 10, marginRight: 10 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 6 },
-  noteCard: { width: "47%", borderRadius: 16, padding: 12 },
+  grid: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
+  noteCard: { width: "47%", borderRadius: 16, padding: 12, marginRight: 12, marginBottom: 12 },
   docTile: { width: 180, backgroundColor: "#fff", borderRadius: 16, padding: 12, marginRight: 12, borderWidth: 1, borderColor: "#E5E7EB" },
   docThumb: { width: 36, height: 36, borderRadius: 8, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center" },
   docName: { fontWeight: "700", marginTop: 8 },
   docMeta: { fontSize: 12, color: "#6B7280", marginTop: 4 },
-  imgGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
+  imgGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: 8 },
   img: { width: 100, height: 100, borderRadius: 12 },
   linkCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: 12, padding: 12 },
-  taskRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  taskRow: { flexDirection: "row", alignItems: "center" },
   taskText: { color: colors.text },
-  taskAdd: { flexDirection: "row", alignItems: "center", gap: 10, borderTopWidth: 1, borderTopColor: "#E5E7EB", paddingTop: 8 },
+  taskAdd: { flexDirection: "row", alignItems: "center", borderTopWidth: 1, borderTopColor: "#E5E7EB", paddingTop: 8 },
   actRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
   actDivider: { borderBottomWidth: 1, borderBottomColor: "#E5E7EB" },
   fab: { position: "absolute", right: 20, bottom: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", elevation: 6 },
@@ -237,6 +237,6 @@ const styles = StyleSheet.create({
   sheetHandle: { width: 50, height: 5, backgroundColor: "#E5E7EB", borderRadius: 9999, alignSelf: "center", marginBottom: 8 },
   sheetTitle: { fontWeight: "800", marginBottom: spacing.md },
   sheetRow: { flexDirection: "row", justifyContent: "space-around" },
-  sheetAction: { alignItems: "center", gap: 6 },
+  sheetAction: { alignItems: "center", marginRight: 6 },
   sheetActionText: { fontSize: 12, marginTop: 4 },
 });
