@@ -3,7 +3,7 @@ import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import { Home, FileText, Camera, User, Briefcase } from "lucide-react-native";
+import { Home, FileText, Camera, User } from "lucide-react-native";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { Alert } from "react-native";
@@ -32,7 +32,7 @@ function BottomTabs() {
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
           if (route.name === "Dashboard") return <Home color={color} size={size} />;
-          if (route.name === "Workspaces") return <Briefcase color={color} size={size} />;
+          if (route.name === "Workspaces") return <Home color={color} size={size} />;
           if (route.name === "Notes") return <FileText color={color} size={size} />;
           if (route.name === "Documents") return <FileText color={color} size={size} />;
           if (route.name === "Scan") return <Camera color={color} size={size} />;
