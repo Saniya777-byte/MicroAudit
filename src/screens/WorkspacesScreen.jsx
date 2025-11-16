@@ -2,21 +2,22 @@ import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus, MoreVertical, Search, Clock } from "lucide-react-native";
+import * as Icons from "lucide-react-native";
 import Card from "../components/Card";
 import ProgressBar from "../components/ProgressBar";
 import { colors, spacing, radius, fonts } from "../theme";
 
 const mock = [
-  { id: "w1", title: "Personal", icon: "🧠", color: "#DBEAFE", notes: 6, docs: 3, done: 4, total: 7, updated: "yesterday" },
-  { id: "w2", title: "Client A", icon: "🏢", color: "#FDE68A", notes: 12, docs: 9, done: 8, total: 12, updated: "3h ago" },
-  { id: "w3", title: "Study", icon: "📚", color: "#FCE7F3", notes: 9, docs: 1, done: 3, total: 8, updated: "2d ago" },
+  { id: "w1", title: "Personal", icon: "Brain", color: "#DBEAFE", notes: 6, docs: 3, done: 4, total: 7, updated: "yesterday" },
+  { id: "w2", title: "Client A", icon: "Building2", color: "#FDE68A", notes: 12, docs: 9, done: 8, total: 12, updated: "3h ago" },
+  { id: "w3", title: "Study", icon: "BookOpen", color: "#FCE7F3", notes: 9, docs: 1, done: 3, total: 8, updated: "2d ago" },
 ];
 
 export default function WorkspacesScreen({ navigation }) {
   const [q, setQ] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [icon, setIcon] = useState("🗂️");
+  const [icon, setIcon] = useState("Folder");
   const [color, setColor] = useState("#DBEAFE");
 
   const list = useMemo(() => (q ? mock.filter(w => w.title.toLowerCase().includes(q.toLowerCase())) : mock), [q]);
@@ -67,12 +68,15 @@ export default function WorkspacesScreen({ navigation }) {
       {/* List */}
       <ScrollView contentContainerStyle={{ padding: spacing.md, gap: 12 }}>
         {list.map((w) => {
+          const IconCmp = Icons[w.icon || "Folder"] || Icons.Folder;
           const progress = w.total ? Math.round((w.done / w.total) * 100) : 0;
           return (
             <TouchableOpacity key={w.id} activeOpacity={0.9} onPress={() => navigation.navigate("WorkspaceDetail", { workspace: w })} onLongPress={() => onLongPress(w)}>
               <View style={[styles.wsCard, { backgroundColor: w.color }]}> 
                 <View style={styles.wsHeader}>
-                  <Text style={styles.wsIcon}>{w.icon}</Text>
+                  <View style={styles.wsIconBox}>
+                    <IconCmp size={18} color="#111827" />
+                  </View>
                   <Text style={styles.wsTitle}>{w.title}</Text>
                 </View>
                 <Text style={styles.wsSub}>{w.notes} Notes • {w.docs} Documents • {w.done}/{w.total} Tasks</Text>
@@ -104,9 +108,15 @@ export default function WorkspacesScreen({ navigation }) {
           <TextInput style={styles.input} placeholder="e.g., Client A" value={title} onChangeText={setTitle} />
           <Text style={styles.label}>Icon</Text>
           <View style={styles.iconRow}>
-            {['🗂️','🏢','📚','🧠','🧪','🛠️','💼','📁'].map(i => (
-              <TouchableOpacity key={i} onPress={() => setIcon(i)} style={[styles.iconPick, icon === i && styles.iconActive]}><Text style={{ fontSize: 18 }}>{i}</Text></TouchableOpacity>
-            ))}
+            {['Folder','Briefcase','Building2','BookOpen','Lightbulb','Wrench','Files','Layers'].map(name => {
+              const I = Icons[name] || Icons.Folder;
+              const active = icon === name;
+              return (
+                <TouchableOpacity key={name} onPress={() => setIcon(name)} style={[styles.iconPick, active && styles.iconActive]}>
+                  <I size={18} color="#111827" />
+                </TouchableOpacity>
+              );
+            })}
           </View>
           <Text style={styles.label}>Color</Text>
           <View style={styles.colorRow}>
@@ -129,7 +139,7 @@ const styles = StyleSheet.create({
   search: { flex: 1, height: 44, color: colors.text },
   wsCard: { borderRadius: 16, padding: spacing.md, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   wsHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
-  wsIcon: { fontSize: 20 },
+  wsIconBox: { width: 28, height: 28, borderRadius: 8, backgroundColor: "#FFFFFFAA", alignItems: "center", justifyContent: "center" },
   wsTitle: { fontWeight: "800", color: "#111827" },
   wsSub: { color: "#374151", marginTop: 6 },
   wsFooter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },

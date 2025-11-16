@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput, Linking, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, MoreVertical, Edit3, Star, FileText, StickyNote, Camera, Plus, Clock, Link as LinkIcon, CheckCircle2, Circle } from "lucide-react-native";
+import * as Icons from "lucide-react-native";
 import ProgressBar from "../components/ProgressBar";
 import SectionHeader from "../components/SectionHeader";
 import Card from "../components/Card";
@@ -38,7 +39,8 @@ const mockActivity = [
 ];
 
 export default function WorkspaceDetail({ route, navigation }) {
-  const workspace = route?.params?.workspace || { id: "w0", title: "Workspace", icon: "🗂️", color: "#DBEAFE", notes: 0, docs: 0, done: 0, total: 0 };
+  const workspace = route?.params?.workspace || { id: "w0", title: "Workspace", icon: "Folder", color: "#DBEAFE", notes: 0, docs: 0, done: 0, total: 0 };
+  const IconCmp = Icons[workspace.icon] || Icons.Folder;
   const [tasks, setTasks] = useState(mockTasksInit);
   const [newTask, setNewTask] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -57,7 +59,10 @@ export default function WorkspaceDetail({ route, navigation }) {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: workspace.color }]}> 
         <TouchableOpacity onPress={() => navigation.goBack()}><ArrowLeft color="#111827" /></TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{workspace.icon}  {workspace.title}</Text>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={styles.wsIconBox}><IconCmp size={18} color="#111827" /></View>
+          <Text style={styles.headerTitle} numberOfLines={1}>{workspace.title}</Text>
+        </View>
         <View style={{ flexDirection: "row", gap: 12 }}>
           <TouchableOpacity><Edit3 color="#111827" /></TouchableOpacity>
           <TouchableOpacity><MoreVertical color="#111827" /></TouchableOpacity>
