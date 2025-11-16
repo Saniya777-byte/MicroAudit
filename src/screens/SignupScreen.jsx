@@ -3,9 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from "reac
 import { supabase } from "../lib/supabaseClient";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
-
-
-WebBrowser.maybeCompleteAuthSession();
+import { Platform } from "react-native";
+import { makeRedirectUri } from "expo-auth-session";
 
 export default function SignupScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -13,13 +12,24 @@ export default function SignupScreen({ navigation }) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Cross-platform notifications
+  const notify = (title, message) => {
+    if (Platform.OS === "web") {
+      // eslint-disable-next-line no-alert
+      window.alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleSignup = async () => {
+    console.log("[Signup] Button pressed", { namePresent: !!name, emailPresent: !!email, passwordPresent: !!password });
     if (!email || !password)
-      return Alert.alert("Error", "Please fill all fields");
+      return notify("Error", "Please fill all fields");
 
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { full_name: name } },
@@ -27,13 +37,26 @@ export default function SignupScreen({ navigation }) {
 
       if (error) throw error;
 
-      Alert.alert(
-        "Success",
-        "Account created! Please check your email to verify your account."
-      );
-      navigation.replace("Login");
+      if (data?.session) {
+        // Immediate session available
+        navigation.replace("Main");
+        return;
+      }
+
+      // Try immediate login (will only work if confirmations are disabled)
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!signInError && signInData?.session) {
+        navigation.replace("Main");
+        return;
+      }
+
+      // Fall back to Home (no verify message)
+      navigation.replace("Main");
     } catch (error) {
-      Alert.alert("Signup Failed", error.message);
+      notify("Signup Failed", error.message);
     } finally {
       setLoading(false);
     }
@@ -42,36 +65,35 @@ export default function SignupScreen({ navigation }) {
 
   const handleGoogleSignup = async () => {
   try {
-    const redirectUrl = Linking.createURL("/auth/callback");
+    const redirectUrl = Platform.OS === "web"
+      ? `${window.location.origin}/auth/callback` // web: normal redirect
+      : makeRedirectUri({ useProxy: true }); // native: Expo Auth proxy
 
+
+    if (Platform.OS === "web") {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: redirectUrl },
+      });
+      if (error) throw error;
+      return; // browser will redirect
+    }
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: redirectUrl },
+      options: { redirectTo: redirectUrl, skipBrowserRedirect: true },
     });
 
     if (error) throw error;
 
     if (data?.url) {
       console.log("Opening Google OAuth URL:", data.url);
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-
-      if (result.type === "success") {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session?.user) {
-          Alert.alert("Success", "Google signup successful!");
-          console.log("Logged in user:", sessionData.session.user);
-          navigation.replace("Home"); 
-        } else {
-          Alert.alert("Info", "Please wait while we complete login.");
-        }
-      } else {
-        Alert.alert("Cancelled", "Google signup cancelled.");
-      }
+      await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+      // Global deep link handler in App.js will exchange the code and navigate
     }
   } catch (error) {
     console.error("Google Signup Failed:", error);
-    Alert.alert("Google Signup Failed", error.message);
+    notify("Google Signup Failed", error.message);
   }
 };
 
@@ -85,6 +107,8 @@ export default function SignupScreen({ navigation }) {
         placeholder="Full Name"
         value={name}
         onChangeText={setName}
+        autoComplete="name"
+        onSubmitEditing={() => {}}
       />
 
       <TextInput
@@ -93,6 +117,9 @@ export default function SignupScreen({ navigation }) {
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
+        autoComplete="email"
+        onSubmitEditing={() => {}}
       />
 
       <TextInput
@@ -101,12 +128,17 @@ export default function SignupScreen({ navigation }) {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        autoCapitalize="none"
+        autoComplete="new-password"
+        onSubmitEditing={handleSignup}
       />
 
       <TouchableOpacity
         style={styles.button}
         onPress={handleSignup}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel="Sign Up"
       >
         <Text style={styles.buttonText}>
           {loading ? "Signing up..." : "Sign Up"}
@@ -117,6 +149,8 @@ export default function SignupScreen({ navigation }) {
         style={styles.googleButton}
         onPress={handleGoogleSignup}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel="Sign Up with Google"
       >
         <Text style={styles.googleText}>Sign Up with Google</Text>
       </TouchableOpacity>
