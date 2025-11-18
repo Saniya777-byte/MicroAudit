@@ -11,7 +11,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Navigate to Home after OAuth completes and session is set
+
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
@@ -21,34 +21,14 @@ export default function LoginScreen({ navigation }) {
     return () => subscription.subscription.unsubscribe();
   }, [navigation]);
 
-  // Cross-platform notifications (Alert can be a no-op on web)
   const notify = (title, message) => {
     if (Platform.OS === "web") {
-      // eslint-disable-next-line no-alert
       window.alert(`${title}: ${message}`);
     } else {
       Alert.alert(title, message);
     }
   };
 
-  // const handleLogin = async () => {
-  //   if (!email || !password)
-  //     return Alert.alert("Error", "Please fill all fields");
-  //   try {
-  //     setLoading(true);
-  //     const { error } = await supabase.auth.signInWithPassword({
-  //       email,
-  //       password,
-  //     });
-  //     if (error) throw error;
-  //     Alert.alert("Success", "Logged in successfully!");
-  //     navigation.replace("Main");
-  //   } catch (error) {
-  //     Alert.alert("Login Failed", error.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
 
   const handleLogin = async () => {
@@ -71,8 +51,8 @@ export default function LoginScreen({ navigation }) {
     if (sessionError) throw sessionError;
 
     if (sessionData?.session) {
-      console.log("✅ Logged in as:", sessionData.session.user.email);
-      navigation.replace("Main"); // ✅ this is correct
+      console.log(" Logged in as:", sessionData.session.user.email);
+      navigation.replace("Main"); 
     } else {
       throw new Error("No session found after login");
     }
@@ -95,8 +75,8 @@ export default function LoginScreen({ navigation }) {
    const handleGoogleLogin = async () => {
     try {
       const redirectUrl = Platform.OS === "web"
-        ? `${window.location.origin}/auth/callback` // web: normal redirect, parsed by detectSessionInUrl
-        : makeRedirectUri({ useProxy: true }); // native: use Expo Auth Session proxy
+        ? `${window.location.origin}/auth/callback` 
+        : makeRedirectUri({ useProxy: true }); 
 
       if (Platform.OS === "web") {
         const { error } = await supabase.auth.signInWithOAuth({
