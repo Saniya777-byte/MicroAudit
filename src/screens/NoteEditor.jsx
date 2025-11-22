@@ -3,17 +3,19 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingVi
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, MoreVertical, Pin, PinOff, Share2, Bold, Italic, Underline, List, CheckSquare, Hash, Palette } from "lucide-react-native";
 import { colors, spacing, radius, fonts } from "../theme";
+import { supabase } from "../lib/supabaseClient";
 
 const pastelColors = ["#FFFFFF", "#FDE68A", "#FCE7F3", "#DBEAFE", "#DCFCE7", "#E9D5FF", "#FFE4E6", "#E0F2FE"];
 
 export default function NoteEditor({ navigation, route }) {
-  const noteId = route?.params?.id || null;
+  const initialId = route?.params?.id || null;
   const initialTitle = route?.params?.title || "";
   const initialContent = route?.params?.content || "";
   const initialColor = route?.params?.color || "#FFFFFF";
   const initialTags = route?.params?.tags || [];
   const initialPinned = !!route?.params?.pinned;
 
+  const [noteId, setNoteId] = useState(initialId);
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
   const [color, setColor] = useState(initialColor);
@@ -25,17 +27,67 @@ export default function NoteEditor({ navigation, route }) {
   const [saving, setSaving] = useState(false);
   const saveTimer = useRef(null);
 
-  // Auto-save debounce (simulated)
+  // Auto-save debounce
   const scheduleSave = () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
+    saveTimer.current = setTimeout(async () => {
+      if (saving) return;
+      
       setSaving(true);
-      // TODO: integrate Supabase upsert here
-      setTimeout(() => {
+      
+      try {
+        // Get current session and user
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error("No active session found");
+          if (Platform.OS === "android") {
+            ToastAndroid.show("Please sign in to save notes", ToastAndroid.SHORT);
+          }
+          return;
+        }
+
+        const user = session.user;
+        
+        // Create or update note
+        const payload = {
+          id: noteId || undefined,
+          user_id: user.id,
+          title: title || "Untitled",
+          content: content || "",
+          color,
+          tags: tags || [],
+          pinned: pinned || false,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data, error } = await supabase
+          .from("notes")
+          .upsert(payload, { onConflict: 'id' })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // If this is a new note, update the local ID
+        if (!noteId && data?.id) {
+          setNoteId(data.id);
+          console.log("New note created with ID:", data.id);
+        }
+
+        console.log("Note saved successfully");
+        if (Platform.OS === "android") {
+          ToastAndroid.show("Note saved", ToastAndroid.SHORT);
+        }
+      } catch (error) {
+        console.error("Error saving note:", error);
+        if (Platform.OS === "android") {
+          ToastAndroid.show("Failed to save note: " + (error.message || "Unknown error"), ToastAndroid.LONG);
+        }
+      } finally {
         setSaving(false);
-        if (Platform.OS === "android") ToastAndroid.show("Saved", ToastAndroid.SHORT);
-      }, 300);
-    }, 1200);
+      }
+    }, 1000); // 1 second debounce
   };
 
   useEffect(() => { return () => { if (saveTimer.current) clearTimeout(saveTimer.current); }; }, []);

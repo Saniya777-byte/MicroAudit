@@ -1,18 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search, MoreVertical, Grid2x2, Rows, Plus, StickyNote, Pin, Clock } from "lucide-react-native";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import { colors, spacing, radius, fonts } from "../theme";
-
-const mockNotes = [
-  { id: "1", title: "Project ideas", content: "AI assistant for audits...", tags: ["Work", "Ideas"], color: "#DBEAFE", pinned: true, updatedAt: "2h" },
-  { id: "2", title: "Shopping list", content: "Milk, Eggs, Bread, Rice, Oil", tags: ["Personal"], color: "#FDE68A", pinned: false, updatedAt: "yesterday" },
-  { id: "3", title: "Study plan", content: "Finish Chapter 4, practice questions", tags: ["Study"], color: "#FCE7F3", pinned: false, updatedAt: "3d" },
-  { id: "4", title: "Meeting notes", content: "Q1 targets, KPIs, next steps", tags: ["Work"], color: "#DCFCE7", pinned: true, updatedAt: "1h" },
-  { id: "5", title: "App copy", content: "Fresh, colorful, modern UI", tags: ["Ideas"], color: "#E9D5FF", pinned: false, updatedAt: "5d" },
-];
+import { supabase } from "../lib/supabaseClient";
 
 export default function NotesScreen({ navigation }) {
   const [query, setQuery] = useState("");
@@ -20,21 +13,101 @@ export default function NotesScreen({ navigation }) {
   const [view, setView] = useState("grid"); // 'grid' | 'list'
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [notes, setNotes] = useState([]);
+
+  const loadNotes = async () => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.log("No active session, cannot load notes");
+        setNotes([]);
+        return;
+      }
+
+      console.log("Loading notes for user:", session.user.id);
+      
+      const { data, error } = await supabase
+        .from("notes")
+        .select("id, title, content, color, tags, pinned, updated_at")
+        .eq("user_id", session.user.id)
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading notes:", error);
+        return;
+      }
+
+      console.log(`Loaded ${data?.length || 0} notes`);
+      
+      const mapped = (data || []).map((n) => ({
+        id: n.id,
+        title: n.title || "Untitled",
+        content: n.content || "",
+        color: n.color || "#FFFFFF",
+        tags: Array.isArray(n.tags) ? n.tags : [],
+        pinned: !!n.pinned,
+        updatedAt: n.updated_at,
+      }));
+
+      setNotes(mapped);
+    } catch (err) {
+      console.error("Unexpected error loading notes:", err);
+    }
+  };
+
+  // Initial load and auth state changes
+  useEffect(() => {
+    loadNotes();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
+      loadNotes();
+    });
+    
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
+  
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('notes_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'notes' 
+        }, 
+        (payload) => {
+          console.log('Notes change received:', payload);
+          loadNotes();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const allTags = useMemo(() => {
     const set = new Set();
-    mockNotes.forEach((n) => n.tags?.forEach((t) => set.add(t)));
+    notes.forEach((n) => n.tags?.forEach((t) => set.add(t)));
     return ["All", ...Array.from(set)];
-  }, []);
+  }, [notes]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return mockNotes.filter((n) => {
+    return notes.filter((n) => {
       const matchText = !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q) || n.tags.some((t) => t.toLowerCase().includes(q));
       const matchTag = activeTag === "All" || n.tags.includes(activeTag);
       return matchText && matchTag;
     });
-  }, [query, activeTag]);
+  }, [query, activeTag, notes]);
 
   const pinned = filtered.filter((n) => n.pinned);
   const others = filtered.filter((n) => !n.pinned);
