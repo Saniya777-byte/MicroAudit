@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Pressable, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Pressable, Alert, Image } from "react-native";
 import { Home, FileText, Camera, User, Bell, Settings, Plus, StickyNote, Clock } from "lucide-react-native";
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/Card";
 import Button from "../components/Button";
@@ -96,16 +97,50 @@ export default function Dashboard({ navigation }) {
   ];
 
   const handleGalleryPress = async () => {
-    setUploadModalVisible(false);
-    // Here you would typically integrate with an image picker library
-    // For example: const result = await ImagePicker.launchImageLibraryAsync();
-    console.log("Opening gallery...");
+    try {
+      // Request permission to access the media library
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Sorry, we need camera roll permissions to select images.');
+        return;
+      }
+
+      // Launch the image library
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        // The selected image is available in result.assets[0].uri
+        const selectedImage = result.assets[0];
+        console.log('Selected image:', selectedImage.uri);
+        
+        // Here you can handle the selected image, e.g., upload it or display it
+        Alert.alert('Image Selected', `Successfully selected: ${selectedImage.fileName || 'image'}`);
+        
+        // You can add your upload logic here
+        // For example: await uploadImage(selectedImage.uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    } finally {
+      setUploadModalVisible(false);
+    }
   };
 
   const handleDrivePress = () => {
     setUploadModalVisible(false);
-    // Here you would integrate with a document picker or Google Drive API
+    Alert.alert('Google Drive', 'Google Drive integration will be implemented here');
     console.log("Opening drive...");
+    // Note: To implement Google Drive integration, you would need to:
+    // 1. Set up Google API credentials
+    // 2. Use a library like react-native-google-drive-api-wrapper
+    // 3. Implement OAuth flow
   };
 
   const onLongPressNote = (n) => {
