@@ -138,7 +138,7 @@ export default function Dashboard({ navigation }) {
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Create</Text>
             <View style={styles.sheetRow}>
-              <TouchableOpacity style={styles.sheetAction} onPress={() => { setSheetOpen(false); /* navigate to create note */ }}>
+              <TouchableOpacity style={styles.sheetAction} onPress={() => { setSheetOpen(false); navigation.navigate("NoteEditor", { id: null }); }}>
                 <StickyNote color={colors.primary} size={22} />
                 <Text style={styles.sheetActionText}>Create Note</Text>
               </TouchableOpacity>
