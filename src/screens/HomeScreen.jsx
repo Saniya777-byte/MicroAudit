@@ -11,6 +11,7 @@ export default function Dashboard({ navigation }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
 
   const loadNotes = async () => {
     try {
@@ -89,10 +90,23 @@ export default function Dashboard({ navigation }) {
   ];
 
   const activity = [
-    { id: "a1", icon: "doc", text: "Electricity Bill.pdf — Added", time: "yesterday" },
-    { id: "a2", icon: "note", text: "Shopping List — Edited", time: "3 hours ago" },
-    { id: "a3", icon: "scan", text: "Passport Scan — Uploaded", time: "2 days ago" },
+    { id: 1, text: "Created Invoice #INV-001", time: "2h ago", icon: "doc" },
+    { id: 2, text: "Updated business profile", time: "1d ago", icon: "note" },
+    { id: 3, text: "Scanned receipt", time: "2d ago", icon: "scan" },
   ];
+
+  const handleGalleryPress = async () => {
+    setUploadModalVisible(false);
+    // Here you would typically integrate with an image picker library
+    // For example: const result = await ImagePicker.launchImageLibraryAsync();
+    console.log("Opening gallery...");
+  };
+
+  const handleDrivePress = () => {
+    setUploadModalVisible(false);
+    // Here you would integrate with a document picker or Google Drive API
+    console.log("Opening drive...");
+  };
 
   const onLongPressNote = (n) => {
     Alert.alert("Note Options", n.title, [
@@ -236,7 +250,13 @@ export default function Dashboard({ navigation }) {
                 <StickyNote color={colors.primary} size={22} />
                 <Text style={styles.sheetActionText}>Create Note</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sheetAction} onPress={() => { setSheetOpen(false); /* navigate to upload */ }}>
+              <TouchableOpacity 
+                style={styles.sheetAction} 
+                onPress={() => {
+                  setSheetOpen(false);
+                  setUploadModalVisible(true);
+                }}
+              >
                 <FileText color={colors.primary} size={22} />
                 <Text style={styles.sheetActionText}>Upload File</Text>
               </TouchableOpacity>
@@ -248,6 +268,44 @@ export default function Dashboard({ navigation }) {
           </View>
         </Modal>
 
+        {/* Upload Options Modal */}
+        <Modal
+          transparent={true}
+          visible={uploadModalVisible}
+          animationType="fade"
+          onRequestClose={() => setUploadModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.uploadOptionsContainer}>
+              <Text style={styles.uploadOptionsTitle}>Choose Source</Text>
+              
+              <TouchableOpacity 
+                style={styles.uploadOption}
+                onPress={handleGalleryPress}
+              >
+                <Text style={styles.uploadOptionText}>Gallery</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.divider} />
+              
+              <TouchableOpacity 
+                style={styles.uploadOption}
+                onPress={handleDrivePress}
+              >
+                <Text style={styles.uploadOptionText}>Google Drive</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.divider} />
+              
+              <TouchableOpacity 
+                style={[styles.uploadOption, styles.cancelButton]}
+                onPress={() => setUploadModalVisible(false)}
+              >
+                <Text style={[styles.uploadOptionText, {color: '#ff3b30'}]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
 
@@ -295,6 +353,45 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)'
+  },
+  // Upload Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  uploadOptionsContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingBottom: 20,
+  },
+  uploadOptionsTitle: {
+    fontSize: 16,
+    color: '#8e8e93',
+    textAlign: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5ea',
+  },
+  uploadOption: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  uploadOptionText: {
+    fontSize: 18,
+    color: '#007AFF',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e5e5ea',
+    marginHorizontal: 16,
+  },
+  cancelButton: {
+    marginTop: 8,
+    borderRadius: 12,
+    backgroundColor: '#f2f2f7',
+    marginHorizontal: 16,
   },
   noteTitle: { 
     fontSize: 16, 
