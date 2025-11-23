@@ -33,6 +33,7 @@ export default function SignupScreen({ navigation }) {
         email,
         password,
         options: { data: { full_name: name } },
+
       });
 
       if (error) throw error;

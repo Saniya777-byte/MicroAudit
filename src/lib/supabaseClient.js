@@ -1,3 +1,4 @@
+import "react-native-url-polyfill/auto";
 import { createClient } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
