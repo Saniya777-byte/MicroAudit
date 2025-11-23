@@ -1,18 +1,86 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image, Modal, Pressable, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Pressable, Alert } from "react-native";
 import { Home, FileText, Camera, User, Bell, Settings, Plus, StickyNote, Clock } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import { colors, spacing, radius, fonts } from "../theme";
-
+import { supabase } from "../lib/supabaseClient";
 
 export default function Dashboard({ navigation }) {
-  const notes = [
-    { id: "n1", title: "Grocery List", preview: "Milk, eggs, bread...", tags: ["Personal"], color: "#DBEAFE" },
-    { id: "n2", title: "Meeting Notes", preview: "Q1 goals and KPIs...", tags: ["Work"], color: "#FDE68A" },
-    { id: "n3", title: "Study Plan", preview: "Read chapter 3-4...", tags: ["Study"], color: "#FCE7F3" },
-  ];
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const loadNotes = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.log("No user found — clearing notes");
+        setNotes([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log("Loading notes for user:", user.id);
+
+      const { data, error } = await supabase
+        .from("notes")
+        .select("id, title, content, color, tags, pinned, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(3); // Only get the 3 most recent notes for the home screen
+
+      if (error) {
+        console.error("Error loading notes:", error);
+        setLoading(false);
+        return;
+      }
+
+      const mapped = (data || []).map((n) => ({
+        id: n.id,
+        title: n.title || "Untitled",
+        preview: n.content ? (n.content.length > 50 ? n.content.substring(0, 50) + '...' : n.content) : "",
+        color: n.color || "#FFFFFF",
+        tags: Array.isArray(n.tags) ? n.tags : [],
+        pinned: !!n.pinned,
+        updatedAt: n.updated_at,
+      }));
+
+      setNotes(mapped);
+    } catch (err) {
+      console.error("Unexpected error loading notes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load notes on mount and when user logs in/out
+  useEffect(() => {
+    loadNotes();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      loadNotes();
+    });
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('notes_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notes' },
+        () => {
+          loadNotes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription?.unsubscribe();
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const docs = [
     { id: "d1", name: "Electricity Bill.pdf", type: "Bill", updated: "2 days ago" },
@@ -25,8 +93,6 @@ export default function Dashboard({ navigation }) {
     { id: "a2", icon: "note", text: "Shopping List — Edited", time: "3 hours ago" },
     { id: "a3", icon: "scan", text: "Passport Scan — Uploaded", time: "2 days ago" },
   ];
-
-  const [sheetOpen, setSheetOpen] = React.useState(false);
 
   const onLongPressNote = (n) => {
     Alert.alert("Note Options", n.title, [
@@ -75,23 +141,51 @@ export default function Dashboard({ navigation }) {
           </Card>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <TouchableOpacity><Text style={styles.link}>View all ›</Text></TouchableOpacity>
+            <Text style={styles.sectionTitle}>Recent Notes</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Notes")}>
+              <Text style={styles.link}>View all ›</Text>
+            </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
-            {notes.map((n) => (
-              <TouchableOpacity key={n.id} onLongPress={() => onLongPressNote(n)} style={[styles.noteCard, { backgroundColor: n.color }]}> 
-                <StickyNote color="#111827" size={18} />
-                <Text style={styles.noteTitle}>{n.title}</Text>
-                <Text style={styles.notePreview} numberOfLines={2}>{n.preview}</Text>
-                <View style={styles.tagRow}>
-                  {n.tags.map((t) => (
-                    <View key={t} style={styles.tagChip}><Text style={styles.tagText}>{t}</Text></View>
-                  ))}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text>Loading notes...</Text>
+            </View>
+          ) : notes.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+              {notes.map((n) => (
+                <TouchableOpacity 
+                  key={n.id} 
+                  onPress={() => navigation.navigate("NoteEditor", n)}
+                  onLongPress={() => onLongPressNote(n)} 
+                  style={[styles.noteCard, { backgroundColor: n.color }]}
+                > 
+                  <StickyNote color="#111827" size={18} />
+                  <Text style={styles.noteTitle}>{n.title}</Text>
+                  {n.preview ? (
+                    <Text style={styles.notePreview} numberOfLines={2}>{n.preview}</Text>
+                  ) : null}
+                  {n.tags && n.tags.length > 0 && (
+                    <View style={styles.tagRow}>
+                      {n.tags.slice(0, 2).map((t) => (
+                        <View key={t} style={styles.tagChip}>
+                          <Text style={styles.tagText} numberOfLines={1}>{t}</Text>
+                        </View>
+                      ))}
+                      {n.tags.length > 2 && (
+                        <View style={styles.tagChip}>
+                          <Text style={styles.tagText}>+{n.tags.length - 2}</Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyNotes}>
+              <Text style={styles.emptyText}>No notes yet. Tap + to create one!</Text>
+            </View>
+          )}
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Documents</Text>
@@ -187,12 +281,85 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: "600" },
   link: { color: "#1D4ED8", fontWeight: "600" },
   horizontalList: { paddingRight: 16 },
-  noteCard: { width: 180, borderRadius: 16, padding: 12, marginRight: 12 },
-  noteTitle: { fontSize: 14, fontWeight: "700", marginTop: 6 },
-  notePreview: { fontSize: 12, color: "#374151", marginTop: 4 },
-  tagRow: { flexDirection: "row", gap: 6, marginTop: 10 },
-  tagChip: { backgroundColor: "#FFFFFFAA", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  tagText: { fontSize: 12, color: "#111827" },
+  noteCard: { 
+    width: 180, 
+    borderRadius: 16, 
+    padding: 16, 
+    marginRight: 16,
+    minHeight: 160,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)'
+  },
+  noteTitle: { 
+    fontSize: 16, 
+    fontWeight: '700', 
+    marginTop: 8,
+    color: '#111827',
+    marginBottom: 4
+  },
+  notePreview: { 
+    fontSize: 13, 
+    color: 'rgba(17, 24, 39, 0.9)', 
+    marginTop: 6, 
+    lineHeight: 18,
+    flex: 1,
+    marginBottom: 8
+  },
+  tagRow: { 
+    flexDirection: "row", 
+    flexWrap: 'wrap', 
+    gap: 6, 
+    marginTop: 'auto',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)'
+  },
+  tagChip: { 
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', 
+    paddingHorizontal: 8, 
+    paddingVertical: 4, 
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)'
+  },
+  tagText: { 
+    fontSize: 11, 
+    color: '#111827',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  emptyNotes: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 160,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+  },
+  emptyText: {
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  loadingContainer: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
+  },
   docTile: { width: 180, backgroundColor: "#fff", borderRadius: 16, padding: 12, marginRight: 12, borderWidth: 1, borderColor: "#E5E7EB" },
   docThumb: { width: 36, height: 36, borderRadius: 8, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center" },
   docName: { fontSize: 14, fontWeight: "600", marginTop: 8 },
