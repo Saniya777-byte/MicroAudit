@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { FileText } from 'lucide-react-native';
 import { colors } from '../../theme';
 
-const DocumentCard = ({ document, onLongPress }) => (
-  <TouchableOpacity onLongPress={onLongPress} style={styles.docTile}>
+const DocumentCard = ({ document, onPress, onLongPress }) => (
+  <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={styles.docTile}>
     <View style={styles.docThumb}>
       <FileText color={colors.primary} size={22} />
     </View>
@@ -17,7 +17,7 @@ const DocumentCard = ({ document, onLongPress }) => (
   </TouchableOpacity>
 );
 
-const DocumentsSection = ({ documents, onDocumentLongPress, onViewAll }) => (
+const DocumentsSection = ({ documents, onDocumentPress, onDocumentLongPress, onViewAll }) => (
   <View style={styles.section}>
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>My Documents</Text>
@@ -34,6 +34,7 @@ const DocumentsSection = ({ documents, onDocumentLongPress, onViewAll }) => (
         <DocumentCard
           key={doc.id}
           document={doc}
+          onPress={() => onDocumentPress(doc)}
           onLongPress={() => onDocumentLongPress(doc)}
         />
       ))}

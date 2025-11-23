@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, Modal, Text, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../lib/supabaseClient';
 import { colors, spacing } from '../theme';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+import { decode } from 'base64-arraybuffer';
 
 // Import components
 import Header from '../components/home/Header';
@@ -18,37 +19,41 @@ import UploadModal from '../components/home/UploadModal';
 
 const HomeScreen = ({ navigation }) => {
   const [notes, setNotes] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
 
-  const loadNotes = async () => {
+  // New state for file naming
+  const [namingModalVisible, setNamingModalVisible] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileNameInput, setFileNameInput] = useState("");
+
+  const loadData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.log("No user found — clearing notes");
+        console.log("No user found — clearing data");
         setNotes([]);
+        setDocuments([]);
         setLoading(false);
         return;
       }
 
-      console.log("Loading notes for user:", user.id);
+      console.log("Loading data for user:", user.id);
 
-      const { data, error } = await supabase
+      // Load Notes
+      const { data: notesData, error: notesError } = await supabase
         .from("notes")
         .select("id, title, content, color, tags, pinned, updated_at")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false })
-        .limit(3); // Only get the 3 most recent notes for the home screen
+        .limit(3);
 
-      if (error) {
-        console.error("Error loading notes:", error);
-        setLoading(false);
-        return;
-      }
+      if (notesError) console.error("Error loading notes:", notesError);
 
-      const mapped = (data || []).map((n) => ({
+      const mappedNotes = (notesData || []).map((n) => ({
         id: n.id,
         title: n.title || "Untitled",
         preview: n.content ? (n.content.length > 50 ? n.content.substring(0, 50) + '...' : n.content) : "",
@@ -58,46 +63,161 @@ const HomeScreen = ({ navigation }) => {
         updatedAt: n.updated_at,
       }));
 
-      setNotes(mapped);
+      setNotes(mappedNotes);
+
+      // Load Documents
+      const { data: docsData, error: docsError } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (docsError) console.error("Error loading documents:", docsError);
+
+      const mappedDocs = (docsData || []).map((d) => ({
+        id: d.id,
+        name: d.name,
+        type: d.type || "File",
+        updated: new Date(d.created_at).toLocaleDateString(),
+        url: d.url
+      }));
+
+      setDocuments(mappedDocs);
+
     } catch (err) {
-      console.error("Unexpected error loading notes:", err);
+      console.error("Unexpected error loading data:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load notes on mount and when user logs in/out
+  // Load data on mount and when user logs in/out
   useEffect(() => {
-    loadNotes();
+    loadData();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      loadNotes();
+      loadData();
     });
 
-    // Set up real-time subscription
-    const channel = supabase
+    // Set up real-time subscription for notes
+    const notesChannel = supabase
       .channel('notes_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notes' },
         () => {
-          loadNotes();
+          loadData();
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for documents
+    const docsChannel = supabase
+      .channel('documents_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'documents' },
+        () => {
+          loadData();
         }
       )
       .subscribe();
 
     return () => {
       subscription?.unsubscribe();
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notesChannel);
+      supabase.removeChannel(docsChannel);
     };
   }, []);
 
+  const uploadFile = async (uri, name, mimeType) => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      console.log("Uploading file:", uri);
+      if (!FileSystem || !FileSystem.readAsStringAsync) {
+        throw new Error("FileSystem not available. Please restart the app.");
+      }
+
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
+
+      const filePath = `${user.id}/${new Date().getTime()}_${name}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, decode(base64), {
+          contentType: mimeType,
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('documents')
+        .insert({
+          user_id: user.id,
+          name: name,
+          type: mimeType,
+          url: publicUrlData.publicUrl,
+          size: base64.length // Approximate size
+        });
+
+      if (dbError) throw dbError;
+
+      Alert.alert("Success", "File uploaded successfully");
+      loadData(); // Refresh list
+    } catch (error) {
+      console.error("Upload failed:", error);
+      Alert.alert("Error", "Failed to upload file: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initiateUpload = (file) => {
+    setSelectedFile(file);
+    // Set default name without extension if possible, or just use the whole name
+    const nameWithoutExt = file.name ? file.name.split('.').slice(0, -1).join('.') : "Untitled";
+    setFileNameInput(nameWithoutExt || file.name || "Untitled");
+    setUploadModalVisible(false); // Close the selection modal
+    setNamingModalVisible(true); // Open the naming modal
+  };
+
+  const handleSaveFile = async () => {
+    if (!fileNameInput.trim()) {
+      Alert.alert("Error", "Please enter a file name");
+      return;
+    }
+
+    if (!selectedFile) return;
+
+    // Append original extension if missing (optional, but good practice)
+    let finalName = fileNameInput;
+    const originalExt = selectedFile.name ? selectedFile.name.split('.').pop() : "";
+    if (originalExt && !finalName.endsWith(`.${originalExt}`)) {
+      finalName = `${finalName}.${originalExt}`;
+    }
+
+    setNamingModalVisible(false);
+    await uploadFile(selectedFile.uri, finalName, selectedFile.mimeType);
+    setSelectedFile(null);
+    setFileNameInput("");
+  };
 
   const handleGalleryPress = async () => {
     try {
       // Request permission to access the media library
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+
       if (status !== 'granted') {
         Alert.alert('Permission required', 'Sorry, we need camera roll permissions to select images.');
         return;
@@ -106,27 +226,21 @@ const HomeScreen = ({ navigation }) => {
       // Launch the image library
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false, // Cropping removed
         quality: 1,
       });
 
       if (!result.canceled) {
-        // The selected image is available in result.assets[0].uri
-        const selectedImage = result.assets[0];
-        console.log('Selected image:', selectedImage.uri);
-        
-        // Here you can handle the selected image, e.g., upload it or display it
-        Alert.alert('Image Selected', `Successfully selected: ${selectedImage.fileName || 'image'}`);
-        
-        // You can add your upload logic here
-        // For example: await uploadImage(selectedImage.uri);
+        const asset = result.assets[0];
+        initiateUpload({
+          uri: asset.uri,
+          name: asset.fileName || `image_${Date.now()}.jpg`,
+          mimeType: asset.mimeType || 'image/jpeg'
+        });
       }
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
-    } finally {
-      setUploadModalVisible(false);
     }
   };
 
@@ -140,19 +254,11 @@ const HomeScreen = ({ navigation }) => {
       });
 
       if (result.type === 'success') {
-        // Read the file content
-        const fileContent = await FileSystem.readAsStringAsync(result.uri, { encoding: FileSystem.EncodingType.Base64 });
-        
-        // Here you can handle the file content, e.g., upload to your server
-        console.log('Selected file:', result.name);
-        console.log('File size:', result.size);
-        console.log('File type:', result.mimeType);
-        
-        // Close the modal after selection
-        setUploadModalVisible(false);
-        
-        // You can add your file upload logic here
-        // For example: await uploadFileToServer(result.uri, result.name, result.mimeType);
+        initiateUpload({
+          uri: result.uri,
+          name: result.name,
+          mimeType: result.mimeType
+        });
       }
     } catch (err) {
       if (!DocumentPicker.isCancel(err)) {
@@ -165,27 +271,38 @@ const HomeScreen = ({ navigation }) => {
   const onLongPressNote = (note) => {
     Alert.alert("Note Options", note.title, [
       { text: "Edit", onPress: () => navigation.navigate("NoteEditor", note) },
-      { text: "Delete", style: "destructive", onPress: () => {} },
-      { text: "Share", onPress: () => {} },
+      { text: "Delete", style: "destructive", onPress: () => { } },
+      { text: "Share", onPress: () => { } },
       { text: "Cancel", style: "cancel" },
     ]);
   };
 
   const onLongPressDoc = (doc) => {
     Alert.alert("Document Options", doc.name, [
-      { text: "Rename", onPress: () => {} },
-      { text: "Delete", style: "destructive", onPress: () => {} },
-      { text: "Share", onPress: () => {} },
+      { text: "Rename", onPress: () => { } },
+      { text: "Delete", style: "destructive", onPress: () => { } },
+      { text: "Share", onPress: () => { } },
       { text: "Cancel", style: "cancel" },
     ]);
   };
 
-  // Mock data for documents and activity
-  const docs = [
-    { id: "d1", name: "Electricity Bill.pdf", type: "Bill", updated: "2 days ago" },
-    { id: "d2", name: "Passport.pdf", type: "ID", updated: "yesterday" },
-    { id: "d3", name: "Invoice_0231.pdf", type: "Bill", updated: "3 hours ago" },
-  ];
+  const handleDocumentPress = async (doc) => {
+    try {
+      if (doc.url) {
+        const supported = await Linking.canOpenURL(doc.url);
+        if (supported) {
+          await Linking.openURL(doc.url);
+        } else {
+          Alert.alert("Error", "Cannot open this file type");
+        }
+      } else {
+        Alert.alert("Error", "File URL not found");
+      }
+    } catch (error) {
+      console.error("Error opening document:", error);
+      Alert.alert("Error", "Failed to open document");
+    }
+  };
 
   const activity = [
     { id: 1, text: "Created Invoice #INV-001", time: "2h ago", icon: "doc" },
@@ -195,41 +312,42 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentContainer}>
           <Header />
-          
+
           <View style={styles.content}>
             <WelcomeCard />
-            
-            <NotesSection 
+
+            <NotesSection
               notes={notes}
               loading={loading}
               onNotePress={(note) => navigation.navigate("NoteEditor", note)}
               onNoteLongPress={onLongPressNote}
               onViewAll={() => navigation.navigate("Notes")}
             />
-            
-            <DocumentsSection 
-              documents={docs}
+
+            <DocumentsSection
+              documents={documents}
+              onDocumentPress={handleDocumentPress}
               onDocumentLongPress={onLongPressDoc}
               onViewAll={() => console.log("View all documents")}
             />
-            
+
             <ActivitySection activities={activity} />
           </View>
         </View>
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity 
-        style={styles.fab} 
-        onPress={() => setSheetOpen(true)} 
-        accessibilityRole="button" 
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setSheetOpen(true)}
+        accessibilityRole="button"
         accessibilityLabel="Create"
       >
         <Plus color="#fff" size={28} />
@@ -251,6 +369,52 @@ const HomeScreen = ({ navigation }) => {
         onGalleryPress={handleGalleryPress}
         onDrivePress={handleDrivePress}
       />
+
+      {/* Naming Modal */}
+      <Modal
+        visible={namingModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setNamingModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Name your file</Text>
+            <Text style={styles.modalSubtitle}>Enter a name for this document</Text>
+
+            <TextInput
+              style={styles.input}
+              value={fileNameInput}
+              onChangeText={setFileNameInput}
+              placeholder="File name"
+              autoFocus
+              selectTextOnFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setNamingModalVisible(false);
+                  setSelectedFile(null);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleSaveFile}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -289,6 +453,71 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#111827',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 24,
+    backgroundColor: '#F9FAFB',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+  },
+  saveButton: {
+    backgroundColor: '#1D4ED8',
+  },
+  cancelButtonText: {
+    color: '#374151',
+    fontWeight: '600',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 
