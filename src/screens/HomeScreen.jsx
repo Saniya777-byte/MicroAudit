@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../lib/supabaseClient';
 import { colors, spacing } from '../theme';
+import * as FileSystem from 'expo-file-system';
 
 // Import components
 import Header from '../components/home/Header';
@@ -128,14 +130,36 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const handleDrivePress = () => {
-    setUploadModalVisible(false);
-    Alert.alert('Google Drive', 'Google Drive integration will be implemented here');
-    console.log("Opening drive...");
-    // Note: To implement Google Drive integration, you would need to:
-    // 1. Set up Google API credentials
-    // 2. Use a library like react-native-google-drive-api-wrapper
-    // 3. Implement OAuth flow
+  const handleDrivePress = async () => {
+    try {
+      // Open document picker for Google Drive
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+        multiple: false
+      });
+
+      if (result.type === 'success') {
+        // Read the file content
+        const fileContent = await FileSystem.readAsStringAsync(result.uri, { encoding: FileSystem.EncodingType.Base64 });
+        
+        // Here you can handle the file content, e.g., upload to your server
+        console.log('Selected file:', result.name);
+        console.log('File size:', result.size);
+        console.log('File type:', result.mimeType);
+        
+        // Close the modal after selection
+        setUploadModalVisible(false);
+        
+        // You can add your file upload logic here
+        // For example: await uploadFileToServer(result.uri, result.name, result.mimeType);
+      }
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        console.error('Error picking document:', err);
+        Alert.alert('Error', 'Failed to pick document. Please try again.');
+      }
+    }
   };
 
   const onLongPressNote = (note) => {
