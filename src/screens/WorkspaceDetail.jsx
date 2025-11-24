@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { colors, spacing } from "../theme";
+import { supabase } from "../lib/supabaseClient";
+import { useFocusEffect } from "@react-navigation/native";
 
 import WorkspaceHeader from "../components/workspace/WorkspaceHeader";
 import WorkspaceOverview from "../components/workspace/WorkspaceOverview";
@@ -33,11 +35,6 @@ const mockResources = {
     { id: "l2", title: "Docs", url: "https://reactnative.dev" },
   ],
 };
-const mockTasksInit = [
-  { id: "t1", title: "Prepare invoice", done: true },
-  { id: "t2", title: "Upload scanned receipt", done: false },
-  { id: "t3", title: "Email client", done: false },
-];
 const mockActivity = [
   { id: "a1", text: "Added document \"Invoice_1234.pdf\"", time: "3h ago", icon: "doc" },
   { id: "a2", text: "Created note \"Sprint plan\"", time: "1d ago", icon: "note" },
@@ -46,9 +43,32 @@ const mockActivity = [
 
 export default function WorkspaceDetail({ route, navigation }) {
   const workspace = route?.params?.workspace || { id: "w0", title: "Workspace", icon: "Folder", color: "#DBEAFE", notes: 0, docs: 0, done: 0, total: 0 };
-  const [tasks, setTasks] = useState(mockTasksInit);
+  const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const fetchTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("workspace_id", workspace.id)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (workspace.id) {
+        fetchTasks();
+      }
+    }, [workspace.id])
+  );
 
   const progress = useMemo(() => {
     const total = tasks.length || 0;
@@ -56,8 +76,59 @@ export default function WorkspaceDetail({ route, navigation }) {
     return total ? Math.round((done / total) * 100) : 0;
   }, [tasks]);
 
-  const toggleTask = (id) => setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !t.done } : t));
-  const addTask = () => { if (!newTask.trim()) return; setTasks(ts => [...ts, { id: `t${ts.length + 1}`, title: newTask.trim(), done: false }]); setNewTask(""); };
+  const toggleTask = async (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const newDone = !task.done;
+
+    // Optimistic update
+    setTasks(ts => ts.map(t => t.id === id ? { ...t, done: newDone } : t));
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ done: newDone })
+        .eq("id", id);
+
+      if (error) {
+        throw error;
+        // Revert on error
+        setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !newDone } : t));
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      Alert.alert("Error", "Failed to update task");
+    }
+  };
+
+  const addTask = async () => {
+    if (!newTask.trim()) return;
+
+    const title = newTask.trim();
+    setNewTask(""); // Clear input immediately
+
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert([
+          {
+            title,
+            workspace_id: workspace.id,
+            done: false
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setTasks(ts => [...ts, data]);
+    } catch (error) {
+      console.error("Error creating task:", error);
+      Alert.alert("Error", "Failed to create task");
+      setNewTask(title); // Restore input on error
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -103,4 +174,3 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.bg },
   fab: { position: "absolute", right: 20, bottom: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", elevation: 6 },
 });
-
