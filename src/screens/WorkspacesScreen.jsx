@@ -23,7 +23,7 @@ export default function WorkspacesScreen({ navigation }) {
     try {
       const { data, error } = await supabase
         .from("workspaces")
-        .select("*")
+        .select("*, tasks(id, done)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -85,7 +85,10 @@ export default function WorkspacesScreen({ navigation }) {
 
       if (error) throw error;
 
-      setWorkspaces(prev => [data, ...prev]);
+      // New workspace has no tasks initially
+      const newWorkspace = { ...data, tasks: [] };
+
+      setWorkspaces(prev => [newWorkspace, ...prev]);
       setSheetOpen(false);
       setTitle("");
       setIcon("Folder");
@@ -143,12 +146,16 @@ export default function WorkspacesScreen({ navigation }) {
           ) : (
             list.map((w) => {
               const IconCmp = Icons[w.icon || "Folder"] || Icons.Folder;
-              // Mock stats for now as we don't have related tables yet
+
+              // Calculate stats from real data
+              const tasks = w.tasks || [];
+              const totalTasks = tasks.length;
+              const doneTasks = tasks.filter(t => t.done).length;
+              const progress = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+              // Mock counts for notes/docs until those tables are linked
               const notesCount = 0;
               const docsCount = 0;
-              const doneTasks = 0;
-              const totalTasks = 0;
-              const progress = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
               const updatedDate = new Date(w.created_at).toLocaleDateString();
 
