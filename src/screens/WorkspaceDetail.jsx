@@ -102,6 +102,44 @@ export default function WorkspaceDetail({ route, navigation }) {
     }
   };
 
+  const deleteTask = async (id) => {
+    // Optimistic update
+    const prevTasks = [...tasks];
+    setTasks(ts => ts.filter(t => t.id !== id));
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      Alert.alert("Error", "Failed to delete task");
+      setTasks(prevTasks); // Revert
+    }
+  };
+
+  const updateTaskTitle = async (id, newTitle) => {
+    // Optimistic update
+    const prevTasks = [...tasks];
+    setTasks(ts => ts.map(t => t.id === id ? { ...t, title: newTitle } : t));
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ title: newTitle })
+        .eq("id", id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating task:", error);
+      Alert.alert("Error", "Failed to update task");
+      setTasks(prevTasks); // Revert
+    }
+  };
+
   const addTask = async () => {
     if (!newTask.trim()) return;
 
@@ -151,6 +189,8 @@ export default function WorkspaceDetail({ route, navigation }) {
           newTask={newTask}
           setNewTask={setNewTask}
           addTask={addTask}
+          deleteTask={deleteTask}
+          updateTaskTitle={updateTaskTitle}
         />
 
         <RecentActivity activity={mockActivity} />
