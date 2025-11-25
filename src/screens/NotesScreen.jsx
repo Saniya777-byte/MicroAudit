@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { colors, spacing } from "../theme";
@@ -65,6 +66,7 @@ export default function NotesScreen({ navigation }) {
   };
 
   // Load on mount + when user logs in/out
+  // Load on mount + when user logs in/out
   useEffect(() => {
     loadNotes();
 
@@ -76,6 +78,12 @@ export default function NotesScreen({ navigation }) {
 
     return () => subscription?.unsubscribe();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadNotes();
+    }, [])
+  );
 
 
   useEffect(() => {

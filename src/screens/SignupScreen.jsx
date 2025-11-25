@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, } from "react-native";
 import { supabase } from "../lib/supabaseClient";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
@@ -65,38 +65,38 @@ export default function SignupScreen({ navigation }) {
 
 
   const handleGoogleSignup = async () => {
-  try {
-    const redirectUrl = Platform.OS === "web"
-      ? `${window.location.origin}/auth/callback` // web: normal redirect
-      : makeRedirectUri({ useProxy: true }); // native: Expo Auth proxy
+    try {
+      const redirectUrl = Platform.OS === "web"
+        ? `${window.location.origin}/auth/callback` // web: normal redirect
+        : makeRedirectUri({ useProxy: true }); // native: Expo Auth proxy
 
 
-    if (Platform.OS === "web") {
-      const { error } = await supabase.auth.signInWithOAuth({
+      if (Platform.OS === "web") {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: redirectUrl },
+        });
+        if (error) throw error;
+        return; // browser will redirect
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: redirectUrl },
+        options: { redirectTo: redirectUrl, skipBrowserRedirect: true },
       });
+
       if (error) throw error;
-      return; // browser will redirect
+
+      if (data?.url) {
+        console.log("Opening Google OAuth URL:", data.url);
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        // Global deep link handler in App.js will exchange the code and navigate
+      }
+    } catch (error) {
+      console.error("Google Signup Failed:", error);
+      notify("Google Signup Failed", error.message);
     }
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: redirectUrl, skipBrowserRedirect: true },
-    });
-
-    if (error) throw error;
-
-    if (data?.url) {
-      console.log("Opening Google OAuth URL:", data.url);
-      await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-      // Global deep link handler in App.js will exchange the code and navigate
-    }
-  } catch (error) {
-    console.error("Google Signup Failed:", error);
-    notify("Google Signup Failed", error.message);
-  }
-};
+  };
 
 
   return (
@@ -109,7 +109,7 @@ export default function SignupScreen({ navigation }) {
         value={name}
         onChangeText={setName}
         autoComplete="name"
-        onSubmitEditing={() => {}}
+        onSubmitEditing={() => { }}
       />
 
       <TextInput
@@ -120,7 +120,7 @@ export default function SignupScreen({ navigation }) {
         onChangeText={setEmail}
         autoCapitalize="none"
         autoComplete="email"
-        onSubmitEditing={() => {}}
+        onSubmitEditing={() => { }}
       />
 
       <TextInput

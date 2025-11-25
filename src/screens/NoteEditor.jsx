@@ -32,13 +32,13 @@ export default function NoteEditor({ navigation, route }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       if (saving) return;
-      
+
       setSaving(true);
-      
+
       try {
         // Get current session and user
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError || !session) {
           console.error("No active session found");
           if (Platform.OS === "android") {
@@ -48,7 +48,7 @@ export default function NoteEditor({ navigation, route }) {
         }
 
         const user = session.user;
-        
+
         // Create or update note
         const payload = {
           id: noteId || undefined,
@@ -104,11 +104,17 @@ export default function NoteEditor({ navigation, route }) {
   }, [tags]);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: color }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: color }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate("Main", { screen: "Notes" });
+            }
+          }}>
             <ArrowLeft color={"#111827"} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{title?.length ? title : "New Note"}</Text>
@@ -138,7 +144,7 @@ export default function NoteEditor({ navigation, route }) {
 
           {/* Applied tags */}
           {tags.length > 0 && (
-            <View style={styles.tagRow}> 
+            <View style={styles.tagRow}>
               {tags.map((t) => (
                 <View key={t} style={styles.tagChip}><Text style={styles.tagText}>{t}</Text></View>
               ))}
@@ -176,7 +182,7 @@ export default function NoteEditor({ navigation, route }) {
         {/* Color Picker Sheet */}
         <Modal transparent visible={colorSheetOpen} animationType="slide" onRequestClose={() => setColorSheetOpen(false)}>
           <Pressable style={styles.sheetBackdrop} onPress={() => setColorSheetOpen(false)} />
-          <View style={styles.sheet}> 
+          <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Choose Color</Text>
             <View style={styles.colorRow}>
@@ -190,7 +196,7 @@ export default function NoteEditor({ navigation, route }) {
         {/* Tag Picker Sheet */}
         <Modal transparent visible={tagSheetOpen} animationType="slide" onRequestClose={() => setTagSheetOpen(false)}>
           <Pressable style={styles.sheetBackdrop} onPress={() => setTagSheetOpen(false)} />
-          <View style={styles.sheet}> 
+          <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Tags</Text>
             <View style={styles.tagsWrap}>
@@ -202,7 +208,7 @@ export default function NoteEditor({ navigation, route }) {
                   </TouchableOpacity>
                 );
               })}
-              <TouchableOpacity style={styles.tagCreate} onPress={() => { const name = `Tag ${tags.length + 1}`; toggleTag(name); }}> 
+              <TouchableOpacity style={styles.tagCreate} onPress={() => { const name = `Tag ${tags.length + 1}`; toggleTag(name); }}>
                 <Text style={{ color: colors.primary, fontWeight: "700" }}>+ Create new tag</Text>
               </TouchableOpacity>
             </View>

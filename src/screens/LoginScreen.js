@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, } from "react-native";
 import { supabase } from "../lib/supabaseClient";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
@@ -32,51 +32,51 @@ export default function LoginScreen({ navigation }) {
 
 
   const handleLogin = async () => {
-  console.log("[Login] Button pressed", { emailPresent: !!email, passwordPresent: !!password });
-  if (!email || !password) {
-    return notify("Error", "Please fill all fields");
-  }
-
-  try {
-    setLoading(true);
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-
-    if (sessionData?.session) {
-      console.log(" Logged in as:", sessionData.session.user.email);
-      navigation.replace("Main"); 
-    } else {
-      throw new Error("No session found after login");
+    console.log("[Login] Button pressed", { emailPresent: !!email, passwordPresent: !!password });
+    if (!email || !password) {
+      return notify("Error", "Please fill all fields");
     }
 
-  } catch (error) {
-    const msg = String(error?.message || error);
-    if (/email\s*not\s*confirmed/i.test(msg)) {
-      console.warn("[Login] Email not confirmed. Proceeding to Home per requirement.");
-      navigation.replace("Main");
-    } else {
-      notify("Login Failed", msg);
-      console.error("Login error:", error);
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      if (sessionData?.session) {
+        console.log(" Logged in as:", sessionData.session.user.email);
+        navigation.replace("Main");
+      } else {
+        throw new Error("No session found after login");
+      }
+
+    } catch (error) {
+      const msg = String(error?.message || error);
+      if (/email\s*not\s*confirmed/i.test(msg)) {
+        console.warn("[Login] Email not confirmed. Proceeding to Home per requirement.");
+        navigation.replace("Main");
+      } else {
+        notify("Login Failed", msg);
+        console.error("Login error:", error);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
-   const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async () => {
     try {
       const redirectUrl = Platform.OS === "web"
-        ? `${window.location.origin}/auth/callback` 
-        : makeRedirectUri({ useProxy: true }); 
+        ? `${window.location.origin}/auth/callback`
+        : makeRedirectUri({ useProxy: true });
 
       if (Platform.OS === "web") {
         const { error } = await supabase.auth.signInWithOAuth({

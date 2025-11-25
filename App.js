@@ -13,8 +13,8 @@ import Dashboard from "./src/screens/HomeScreen";
 import Documents from "./src/screens/DocumentsScreen";
 import Scan from "./src/screens/ScanScreen";
 import Profile from "./src/screens/ProfileScreen";
-import Login from "./src/screens/LoginScreen"; 
-import Signup from "./src/screens/SignupScreen"; 
+import Login from "./src/screens/LoginScreen";
+import Signup from "./src/screens/SignupScreen";
 import Notes from "./src/screens/NotesScreen";
 import NoteEditor from "./src/screens/NoteEditor";
 import Workspaces from "./src/screens/WorkspacesScreen";
@@ -52,7 +52,7 @@ function BottomTabs() {
 
 export default function App() {
 
-    const [session, setSession] = useState(null);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Handle OAuth deep links globally on native. On web, Supabase handles via detectSessionInUrl.
@@ -124,7 +124,7 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     // ✅ Get session on app load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -169,7 +169,7 @@ export default function App() {
     ensureProfile();
   }, [session]);
 
-    if (loading) return null; 
+  if (loading) return null;
 
   return (
     <NavigationContainer>
