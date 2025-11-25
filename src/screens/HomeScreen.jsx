@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, Modal, Text, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -130,6 +131,12 @@ const HomeScreen = ({ navigation }) => {
       supabase.removeChannel(docsChannel);
     };
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const uploadFile = async (uri, name, mimeType) => {
     try {
