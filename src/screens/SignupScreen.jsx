@@ -22,6 +22,33 @@ export default function SignupScreen({ navigation }) {
     }
   };
 
+  const createDefaultNotes = async (userId) => {
+    try {
+      const welcomeNote = {
+        user_id: userId,
+        title: "Welcome to MicroAudit! 👋",
+        content: "We're thrilled to have you on board! 🎉\n\nMicroAudit is your personal space to keep everything organized and accessible.\n\nHere's what you can do:\n• 📝 **Capture Thoughts**: Jot down ideas, lists, and important info.\n• 📂 **Manage Documents**: Upload and store your files securely.\n• 🔍 **Find Fast**: Use search and tags to locate anything in seconds.\n\nWe hope you enjoy using the app as much as we enjoyed building it for you. Make yourself at home! 🏠\n\nBest,\nThe MicroAudit Team",
+        color: "#DBEAFE",
+        pinned: true,
+        updated_at: new Date().toISOString(),
+      };
+
+      const instructionNote = {
+        user_id: userId,
+        title: "How to use MicroAudit 📝",
+        content: "Here are a few quick tips to help you get the most out of MicroAudit:\n\n1. **Create a Note** ➕\n   Tap the floating + button to start writing. You can add a title and body text.\n\n2. **Format Your Text** 🎨\n   Use the toolbar above the keyboard to add **bold**, *italics*, lists, and more.\n\n3. **Organize with Tags** 🏷️\n   Tap the # icon to add tags like 'Work', 'Personal', or 'Ideas' to keep things sorted.\n\n4. **Color Code** 🌈\n   Tap the palette icon to change the note color for visual organization.\n\n5. **Pin Important Notes** 📌\n   Tap the pin icon to keep your most important notes at the top of the list.\n\nHappy auditing! 🚀",
+        color: "#FCE7F3",
+        pinned: false,
+        updated_at: new Date(Date.now() - 1000).toISOString(), // Slightly older so Welcome appears first
+      };
+
+      const { error } = await supabase.from("notes").insert([welcomeNote, instructionNote]);
+      if (error) console.error("Error creating default notes:", error);
+    } catch (err) {
+      console.error("Failed to create default notes:", err);
+    }
+  };
+
   const handleSignup = async () => {
     console.log("[Signup] Button pressed", { namePresent: !!name, emailPresent: !!email, passwordPresent: !!password });
     if (!email || !password)
@@ -40,6 +67,7 @@ export default function SignupScreen({ navigation }) {
 
       if (data?.session) {
         // Immediate session available
+        await createDefaultNotes(data.session.user.id);
         navigation.replace("Main");
         return;
       }
@@ -50,6 +78,7 @@ export default function SignupScreen({ navigation }) {
         password,
       });
       if (!signInError && signInData?.session) {
+        await createDefaultNotes(signInData.session.user.id);
         navigation.replace("Main");
         return;
       }
