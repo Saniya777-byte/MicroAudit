@@ -51,18 +51,38 @@ export default function ScanScreen({ navigation }) {
         }
 
         try {
-            let savedDocs = await AsyncStorage.getItem("scannedDocuments");
-            savedDocs = savedDocs ? JSON.parse(savedDocs) : [];
-
-            savedDocs.push({ name: docType, uri: image });
-
-            await AsyncStorage.setItem("scannedDocuments", JSON.stringify(savedDocs));
-
-            Alert.alert("Success", "Document saved!");
-            setImage(null);
-            setDocType("");
+            // Get current date for folder organization
+            const today = new Date();
+            const monthYear = today.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            // Get existing documents
+            let savedDocs = await AsyncStorage.getItem("documents");
+            savedDocs = savedDocs ? JSON.parse(savedDocs) : {};
+            
+            // Create folder if it doesn't exist
+            if (!savedDocs[monthYear]) {
+                savedDocs[monthYear] = [];
+            }
+            
+            // Add new document
+            const newDoc = {
+                id: Date.now().toString(),
+                name: docType,
+                uri: image,
+                savedAt: today.toISOString(),
+                type: 'image'
+            };
+            
+            savedDocs[monthYear].push(newDoc);
+            
+            // Save back to storage
+            await AsyncStorage.setItem("documents", JSON.stringify(savedDocs));
+            
+            Alert.alert("Success", "Document saved successfully!");
+            navigation.goBack();
         } catch (error) {
             console.error("Error saving document:", error);
+            Alert.alert("Error", "Failed to save document. Please try again.");
         }
     };
 
@@ -97,43 +117,51 @@ export default function ScanScreen({ navigation }) {
         );
     }
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Text style={styles.title}>📄 Document Scanner</Text>
-
-                <TouchableOpacity style={styles.button} onPress={openCamera}>
-                    <Text style={styles.btnText}>📷 Scan with Camera</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.button} onPress={pickImage}>
-                    <Text style={styles.btnText}>🖼️ Pick from Gallery</Text>
-                </TouchableOpacity>
-
-                {image && (
-                    <View style={styles.previewContainer}>
-                        <Image source={{ uri: image }} style={styles.preview} />
-
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter document name"
-                            value={docType}
-                            onChangeText={setDocType}
-                        />
-
-                        <TouchableOpacity style={styles.saveBtn} onPress={saveImage}>
-                            <Text style={styles.btnText}>💾 Save Document</Text>
+    if (image) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.previewContainer}>
+                    <Image source={{ uri: image }} style={styles.previewImage} />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter document name"
+                        value={docType}
+                        onChangeText={setDocType}
+                        placeholderTextColor="#999"
+                    />
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity 
+                            style={[styles.actionBtn, { backgroundColor: '#ff3b30' }]}
+                            onPress={() => setImage(null)}
+                        >
+                            <Text style={styles.btnText}>Retake</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={[styles.actionBtn, { backgroundColor: '#34C759' }]}
+                            onPress={saveImage}
+                            disabled={!docType.trim()}
+                        >
+                            <Text style={styles.btnText}>Save Document</Text>
                         </TouchableOpacity>
                     </View>
-                )}
+                </View>
+            </SafeAreaView>
+        );
+    }
 
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: "#4A90E2" }]}
-                    onPress={() => navigation.navigate("History")}
-                >
-                    <Text style={styles.btnText}>📂 View History</Text>
-                </TouchableOpacity>
-            </ScrollView>
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={{ padding: 20 }}>
+                <Text style={styles.title}>📄 Document Scanner</Text>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={openCamera}>
+                        <Text style={styles.buttonText}>📷 Scan with Camera</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={pickImage}>
+                        <Text style={styles.buttonText}>🖼️ Pick from Gallery</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
@@ -141,94 +169,79 @@ export default function ScanScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F5F5",
-    },
-    scrollContainer: {
-        padding: 20,
-        alignItems: "center",
-        flexGrow: 1,
-        justifyContent: "center",
-    },
-    title: {
-        fontSize: 26,
-        fontWeight: "bold",
-        marginBottom: 25,
-        color: "#333",
-    },
-    button: {
-        width: "90%",
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        backgroundColor: "#FF6F61",
-        alignItems: "center",
-        marginVertical: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    btnText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#fff",
+        backgroundColor: "#FFFFFF",
     },
     previewContainer: {
-        marginTop: 20,
-        alignItems: "center",
-        width: "100%",
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 15,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        flex: 1,
+        padding: 20,
+        justifyContent: 'center',
     },
-    preview: {
-        width: 250,
-        height: 350,
-        borderRadius: 12,
-        marginBottom: 15,
-        resizeMode: "cover",
+    previewImage: {
+        width: '100%',
+        height: 300,
+        resizeMode: 'contain',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 10,
+        marginBottom: 20,
     },
     input: {
-        borderWidth: 1,
-        borderColor: "#ccc",
-        padding: 12,
-        width: "90%",
+        backgroundColor: '#f5f5f5',
+        padding: 15,
         borderRadius: 10,
-        marginBottom: 15,
-        backgroundColor: "#f9f9f9",
+        marginBottom: 20,
+        fontSize: 16,
+        color: '#000',
     },
-    saveBtn: {
-        width: "90%",
-        padding: 14,
-        backgroundColor: "#28A745",
-        borderRadius: 12,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 4,
+    buttonContainer: {
+        marginTop: 20,
+        gap: 15,
+    },
+    button: {
+        backgroundColor: '#007AFF',
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+    actionBtn: {
+        flex: 1,
+        padding: 15,
+        backgroundColor: "#007AFF",
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    btnText: {
+        color: "white",
+        textAlign: "center",
+        fontWeight: '600',
     },
     camera: {
         flex: 1,
-        width: "100%",
     },
     cameraButtons: {
         flexDirection: "row",
         justifyContent: "space-around",
         padding: 20,
-        backgroundColor: "#000",
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
     },
-    actionBtn: {
-        paddingVertical: 15,
-        paddingHorizontal: 25,
-        backgroundColor: "#FF6F61",
-        borderRadius: 12,
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        color: '#000',
+        textAlign: 'center',
     },
 });

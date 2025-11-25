@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { SafeAreaView, View,  Text,FlatList,Image, StyleSheet, ScrollView,} from "react-native";
+import { SafeAreaView, View, Text, FlatList, Image, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { Camera, Plus } from "lucide-react-native";
+import { colors, spacing } from "../theme";
 
 export default function DocumentsScreen() {
   const [documents, setDocuments] = useState({});
+  const navigation = useNavigation();
 
 
   useFocusEffect(
@@ -22,8 +25,19 @@ export default function DocumentsScreen() {
     }, [])
   );
 
+  const handleScanPress = () => {
+    navigation.navigate('Scan');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <Text style={styles.title}>My Documents</Text>
+        <TouchableOpacity style={styles.scanButton} onPress={handleScanPress}>
+          <Camera size={20} color="white" />
+          <Text style={styles.scanButtonText}>Scan</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView contentContainerStyle={styles.container}>
         {Object.keys(documents).length === 0 ? (
           <Text style={styles.emptyText}>No documents saved yet</Text>
@@ -52,6 +66,32 @@ export default function DocumentsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "white" },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    gap: spacing.xs,
+  },
+  scanButtonText: {
+    color: 'white',
+    fontWeight: '500',
+  },
   container: { padding: 20, paddingBottom: 40 }, 
   emptyText: {
     textAlign: "center",

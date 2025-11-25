@@ -182,6 +182,8 @@ export default function App() {
         <Stack.Screen name="Main" component={BottomTabs} />
         <Stack.Screen name="NoteEditor" component={NoteEditor} />
         <Stack.Screen name="WorkspaceDetail" component={WorkspaceDetail} />
+        <Stack.Screen name="Scan" component={Scan} />
+        <Stack.Screen name="Documents" component={Documents} />
       </Stack.Navigator>
     </NavigationContainer>
   );
