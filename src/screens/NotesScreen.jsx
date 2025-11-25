@@ -135,15 +135,58 @@ export default function NotesScreen({ navigation }) {
   const pinned = filtered.filter((n) => n.pinned);
   const others = filtered.filter((n) => !n.pinned);
 
-  const onLongPressNote = (n) => {
-    Alert.alert("Note", n.title, [
-      { text: n.pinned ? "Unpin" : "Pin", onPress: () => { } },
-      { text: "Edit", onPress: () => { } },
-      { text: "Duplicate", onPress: () => { } },
-      { text: "Share", onPress: () => { } },
-      { text: "Delete", style: "destructive", onPress: () => { } },
-      { text: "Cancel", style: "cancel" },
-    ]);
+  const onLongPressNote = async (n) => {
+    const handleDelete = async () => {
+      try {
+        const { error } = await supabase
+          .from('notes')
+          .delete()
+          .eq('id', n.id);
+
+        if (error) {
+          console.error('Error deleting note:', error);
+          Alert.alert('Error', 'Failed to delete the note. Please try again.');
+          return;
+        }
+        
+        // Update local state to remove the deleted note
+        setNotes(prevNotes => prevNotes.filter(note => note.id !== n.id));
+      } catch (err) {
+        console.error('Unexpected error deleting note:', err);
+        Alert.alert('Error', 'An unexpected error occurred while deleting the note.');
+      }
+    };
+
+    Alert.alert(
+      "Note Options",
+      n.title,
+      [
+        { text: n.pinned ? "Unpin" : "Pin", onPress: () => { } },
+        { text: "Edit", onPress: () => navigation.navigate("NoteEditor", n) },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: () => {
+            Alert.alert(
+              "Delete Note",
+              "Are you sure you want to delete this note?",
+              [
+                {
+                  text: "Cancel",
+                  style: "cancel"
+                },
+                { 
+                  text: "Delete", 
+                  style: "destructive",
+                  onPress: handleDelete
+                }
+              ]
+            );
+          } 
+        },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
   };
 
   return (
