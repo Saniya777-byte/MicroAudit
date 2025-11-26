@@ -71,13 +71,63 @@ const HomeScreen = ({ navigation }) => {
         .order('created_at', { ascending: false })
         .limit(5);
       if (docsError) console.error('Error loading documents:', docsError);
-      const mappedDocs = (docsData || []).map(d => ({
-        id: d.id,
-        name: d.name,
-        type: d.type || 'File',
-        updated: new Date(d.created_at).toLocaleDateString(),
-        url: d.url,
-      }));
+      let mappedDocs = [];
+
+      // If no documents exist, create dummy ones for demo
+      if (!docsData || docsData.length === 0) {
+        mappedDocs = [
+          {
+            id: 'demo1',
+            name: 'Project Overview',
+            type: 'image/jpeg',
+            updated: new Date().toLocaleDateString(),
+            url: 'https://placehold.co/600x400/DBEAFE/1e40af?text=Project+Overview',
+            isDemo: true
+          },
+          {
+            id: 'demo2',
+            name: 'Meeting Notes',
+            type: 'image/jpeg',
+            updated: new Date().toLocaleDateString(),
+            url: 'https://placehold.co/600x400/FDE68A/92400e?text=Meeting+Notes',
+            isDemo: true
+          },
+          {
+            id: 'demo3',
+            name: 'Design Mockups',
+            type: 'image/jpeg',
+            updated: new Date().toLocaleDateString(),
+            url: 'https://placehold.co/600x400/DCFCE7/166534?text=Design+Mockups',
+            isDemo: true
+          },
+          {
+            id: 'demo4',
+            name: 'Requirements',
+            type: 'image/jpeg',
+            updated: new Date().toLocaleDateString(),
+            url: 'https://placehold.co/600x400/FEE2E2/b91c1c?text=Requirements',
+            isDemo: true
+          },
+          {
+            id: 'demo5',
+            name: 'User Stories',
+            type: 'image/jpeg',
+            updated: new Date().toLocaleDateString(),
+            url: 'https://placehold.co/600x400/EDE9FE/5b21b6?text=User+Stories',
+            isDemo: true
+          }
+        ];
+      } else {
+        // Map real documents
+        mappedDocs = docsData.map(d => ({
+          id: d.id,
+          name: d.name,
+          type: d.type || 'File',
+          updated: new Date(d.created_at).toLocaleDateString(),
+          url: d.url,
+          isDemo: false
+        }));
+      }
       setDocuments(mappedDocs);
     } catch (err) {
       console.error('Unexpected error loading data:', err);

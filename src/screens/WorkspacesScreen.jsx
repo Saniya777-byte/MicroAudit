@@ -28,9 +28,28 @@ export default function WorkspacesScreen({ navigation }) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setWorkspaces(data || []);
+      
+      // If no workspaces exist, create default ones
+      if (!data || data.length === 0) {
+        const defaultWorkspaces = [
+          { title: "Personal", icon: "Folder", color: "#DBEAFE" },
+          { title: "Work", icon: "Briefcase", color: "#FDE68A" },
+          { title: "Projects", icon: "Layers", color: "#DCFCE7" }
+        ];
+        
+        // Insert default workspaces
+        const { data: insertedWorkspaces, error: insertError } = await supabase
+          .from('workspaces')
+          .insert(defaultWorkspaces)
+          .select('*, tasks(id, done)');
+          
+        if (insertError) throw insertError;
+        setWorkspaces(insertedWorkspaces || []);
+      } else {
+        setWorkspaces(data);
+      }
     } catch (error) {
-      console.error("Error fetching workspaces:", error);
+      console.error("Error in fetchWorkspaces:", error);
       Alert.alert("Error", "Failed to fetch workspaces");
     } finally {
       setLoading(false);
