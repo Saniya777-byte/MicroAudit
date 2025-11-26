@@ -32,7 +32,7 @@ export default function AddResourceSheet({ visible, onClose, onAdd }) {
     const handlePickImage = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: 'images',
                 quality: 0.8,
                 base64: true, // We might need base64 if we are uploading, but for now let's assume we handle the URI
             });
