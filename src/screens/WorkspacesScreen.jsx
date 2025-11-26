@@ -18,6 +18,7 @@ export default function WorkspacesScreen({ navigation }) {
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const fetchWorkspaces = async () => {
     try {
@@ -44,9 +45,25 @@ export default function WorkspacesScreen({ navigation }) {
 
   const list = useMemo(() => (q ? workspaces.filter(w => w.title.toLowerCase().includes(q.toLowerCase())) : workspaces), [q, workspaces]);
 
+  const handleEdit = (w) => {
+    setEditingId(w.id);
+    setTitle(w.title);
+    setIcon(w.icon || "Folder");
+    setColor(w.color || "#DBEAFE");
+    setSheetOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setTitle("");
+    setIcon("Folder");
+    setColor("#DBEAFE");
+    setSheetOpen(false);
+  };
+
   const onLongPress = (w) => {
     Alert.alert("Workspace", w.title, [
-      { text: "Edit", onPress: () => setSheetOpen(true) }, // TODO: Implement edit pre-fill
+      { text: "Edit", onPress: () => handleEdit(w) },
       { text: "Delete", style: "destructive", onPress: () => deleteWorkspace(w.id) },
       { text: "Cancel", style: "cancel" },
     ]);
@@ -63,7 +80,7 @@ export default function WorkspacesScreen({ navigation }) {
     }
   };
 
-  const createWorkspace = async () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       Alert.alert("Validation", "Please enter a title");
       return;
@@ -71,31 +88,47 @@ export default function WorkspacesScreen({ navigation }) {
 
     setCreating(true);
     try {
-      const { data, error } = await supabase
-        .from("workspaces")
-        .insert([
-          {
+      if (editingId) {
+        // Update existing workspace
+        const { data, error } = await supabase
+          .from("workspaces")
+          .update({
             title: title.trim(),
             icon,
             color,
-          },
-        ])
-        .select()
-        .single();
+          })
+          .eq("id", editingId)
+          .select("*, tasks(id, done)")
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // New workspace has no tasks initially
-      const newWorkspace = { ...data, tasks: [] };
+        setWorkspaces(prev => prev.map(w => w.id === editingId ? data : w));
+        Alert.alert("Success", "Workspace updated");
+      } else {
+        // Create new workspace
+        const { data, error } = await supabase
+          .from("workspaces")
+          .insert([
+            {
+              title: title.trim(),
+              icon,
+              color,
+            },
+          ])
+          .select()
+          .single();
 
-      setWorkspaces(prev => [newWorkspace, ...prev]);
-      setSheetOpen(false);
-      setTitle("");
-      setIcon("Folder");
-      setColor("#DBEAFE");
+        if (error) throw error;
+
+        // New workspace has no tasks initially
+        const newWorkspace = { ...data, tasks: [] };
+        setWorkspaces(prev => [newWorkspace, ...prev]);
+      }
+      resetForm();
     } catch (error) {
-      console.error("Error creating workspace:", error);
-      Alert.alert("Error", "Failed to create workspace");
+      console.error("Error saving workspace:", error);
+      Alert.alert("Error", `Failed to ${editingId ? "update" : "create"} workspace`);
     } finally {
       setCreating(false);
     }
@@ -107,7 +140,7 @@ export default function WorkspacesScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.title}>Workspaces</Text>
         <View style={{ flexDirection: "row" }}>
-          <TouchableOpacity onPress={() => setSheetOpen(true)}><Plus color={colors.text} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => { resetForm(); setSheetOpen(true); }}><Plus color={colors.text} /></TouchableOpacity>
           <TouchableOpacity style={{ marginLeft: 12 }}><MoreVertical color={colors.text} /></TouchableOpacity>
         </View>
       </View>
@@ -139,7 +172,7 @@ export default function WorkspacesScreen({ navigation }) {
           {list.length === 0 ? (
             <View style={{ alignItems: "center", marginTop: 50 }}>
               <Text style={{ color: colors.muted }}>No workspaces found</Text>
-              <TouchableOpacity onPress={() => setSheetOpen(true)} style={{ marginTop: 10 }}>
+              <TouchableOpacity onPress={() => { resetForm(); setSheetOpen(true); }} style={{ marginTop: 10 }}>
                 <Text style={{ color: colors.primary, fontWeight: "bold" }}>Create one</Text>
               </TouchableOpacity>
             </View>
@@ -185,16 +218,16 @@ export default function WorkspacesScreen({ navigation }) {
       )}
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setSheetOpen(true)}>
+      <TouchableOpacity style={styles.fab} onPress={() => { resetForm(); setSheetOpen(true); }}>
         <Plus color="#fff" size={28} />
       </TouchableOpacity>
 
-      {/* Create Sheet */}
-      <Modal transparent visible={sheetOpen} animationType="slide" onRequestClose={() => setSheetOpen(false)}>
-        <Pressable style={styles.sheetBackdrop} onPress={() => setSheetOpen(false)} />
+      {/* Create/Edit Sheet */}
+      <Modal transparent visible={sheetOpen} animationType="slide" onRequestClose={resetForm}>
+        <Pressable style={styles.sheetBackdrop} onPress={resetForm} />
         <View style={styles.sheet}>
           <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>Create Workspace</Text>
+          <Text style={styles.sheetTitle}>{editingId ? "Edit Workspace" : "Create Workspace"}</Text>
           <Text style={styles.label}>Title</Text>
           <TextInput style={styles.input} placeholder="e.g., Client A" value={title} onChangeText={setTitle} />
           <Text style={styles.label}>Icon</Text>
@@ -215,8 +248,8 @@ export default function WorkspacesScreen({ navigation }) {
               <TouchableOpacity key={c} onPress={() => setColor(c)} style={[styles.colorDot, { backgroundColor: c }, color === c && styles.colorActive]} />
             ))}
           </View>
-          <TouchableOpacity style={styles.createBtn} onPress={createWorkspace} disabled={creating}>
-            {creating ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>Create</Text>}
+          <TouchableOpacity style={styles.createBtn} onPress={handleSave} disabled={creating}>
+            {creating ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>{editingId ? "Save Changes" : "Create"}</Text>}
           </TouchableOpacity>
         </View>
       </Modal>
