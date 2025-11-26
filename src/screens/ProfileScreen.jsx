@@ -31,8 +31,8 @@ export default function ProfileScreen({ navigation }) {
 
   // Minimal stats (mock, replace with DB later)
   const [stats, setStats] = useState({ completed: 54, pending: 12, audits: 8, score: 82 });
-  const [weekly, setWeekly] = useState([2, 5, 3, 6, 4, 1, 2]); // 7 bars Mon..Sun
-  const [monthly, setMonthly] = useState([60, 62, 64, 58, 70, 72, 68, 75, 78, 80, 82, 85]); // 12 points
+  const [weekly, setWeekly] = useState([2, 5, 3, 6, 4, 1, 2]); 
+  const [monthly, setMonthly] = useState([60, 62, 64, 58, 70, 72, 68, 75, 78, 80, 82, 85]); 
 
   useEffect(() => {
     const load = async () => {
@@ -150,7 +150,7 @@ export default function ProfileScreen({ navigation }) {
         {/* Settings */}
         <Card style={styles.card}>
           <Text style={styles.sectionTitle}>Settings</Text>
-          <View style={styles.toggleRow}><Text style={styles.toggleLabel}>Dark mode</Text><Switch value={darkMode} onValueChange={setDarkMode} /></View>
+          {/* <View style={styles.toggleRow}><Text style={styles.toggleLabel}>Dark mode</Text><Switch value={darkMode} onValueChange={setDarkMode} /></View> */}
           <View style={styles.toggleRow}><Text style={styles.toggleLabel}>Notifications</Text><Switch value={notifOn} onValueChange={setNotifOn} /></View>
           <View style={styles.toggleRow}><Text style={styles.toggleLabel}>Auto-sync</Text><Switch value={autoSync} onValueChange={setAutoSync} /></View>
         </Card>

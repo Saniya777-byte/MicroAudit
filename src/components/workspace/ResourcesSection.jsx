@@ -50,19 +50,19 @@ const styles = StyleSheet.create({
         flexDirection: "row", 
         flexWrap: "wrap", 
         marginTop: 8,
-        marginRight: -8  // Compensate for the margin on the last item in the row
+        marginRight: -8  
     },
     imageContainer: {
-        width: '33.33%',  // 3 items per row
+        width: '33.33%',  
         paddingRight: 8,
         paddingBottom: 8,
-        aspectRatio: 1,   // Keep images square
+        aspectRatio: 1,   
     },
     img: { 
         width: '100%', 
         height: '100%',
         borderRadius: 12,
-        backgroundColor: '#f0f0f0',  // Fallback background color
+        backgroundColor: '#f0f0f0',  
         borderWidth: 1,
         borderColor: '#e0e0e0'
     },
