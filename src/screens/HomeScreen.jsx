@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, Modal, Text, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Text, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../lib/supabaseClient';
 import { colors, spacing } from '../theme';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 
 // Import components
@@ -28,103 +29,131 @@ const HomeScreen = ({ navigation }) => {
   // New state for file naming
   const [namingModalVisible, setNamingModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [fileNameInput, setFileNameInput] = useState("");
+  const [fileNameInput, setFileNameInput] = useState('');
 
   const loadData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
-        console.log("No user found — clearing data");
+        console.log('No user found — clearing data');
         setNotes([]);
         setDocuments([]);
         setLoading(false);
         return;
       }
-
-      console.log("Loading data for user:", user.id);
+      console.log('Loading data for user:', user.id);
 
       // Load Notes
       const { data: notesData, error: notesError } = await supabase
-        .from("notes")
-        .select("id, title, content, color, tags, pinned, updated_at")
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false })
+        .from('notes')
+        .select('id, title, content, color, tags, pinned, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
         .limit(3);
-
-      if (notesError) console.error("Error loading notes:", notesError);
-
-      const mappedNotes = (notesData || []).map((n) => ({
+      if (notesError) console.error('Error loading notes:', notesError);
+      const mappedNotes = (notesData || []).map(n => ({
         id: n.id,
-        title: n.title || "Untitled",
-        preview: n.content ? (n.content.length > 50 ? n.content.substring(0, 50) + '...' : n.content) : "",
-        color: n.color || "#FFFFFF",
+        title: n.title || 'Untitled',
+        content: n.content || '',
+        preview: n.content ? (n.content.length > 50 ? n.content.substring(0, 50) + '...' : n.content) : '',
+        color: n.color || '#FFFFFF',
         tags: Array.isArray(n.tags) ? n.tags : [],
         pinned: !!n.pinned,
         updatedAt: n.updated_at,
       }));
-
       setNotes(mappedNotes);
 
       // Load Documents
       const { data: docsData, error: docsError } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+        .from('documents')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
         .limit(5);
-
-      if (docsError) console.error("Error loading documents:", docsError);
-
-      const mappedDocs = (docsData || []).map((d) => ({
+      if (docsError) console.error('Error loading documents:', docsError);
+      const mappedDocs = (docsData || []).map(d => ({
         id: d.id,
         name: d.name,
-        type: d.type || "File",
+        type: d.type || 'File',
         updated: new Date(d.created_at).toLocaleDateString(),
-        url: d.url
+        url: d.url,
       }));
-
       setDocuments(mappedDocs);
-
     } catch (err) {
-      console.error("Unexpected error loading data:", err);
+      console.error('Unexpected error loading data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load data on mount and when user logs in/out
+  // Gallery upload handler
+  const handleGalleryPress = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Camera roll permissions are needed to select images.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        initiateUpload({
+          uri: asset.uri,
+          name: asset.fileName || `image_${Date.now()}.jpg`,
+          mimeType: asset.mimeType || 'image/jpeg',
+        });
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  // Drive upload handler
+  const handleDrivePress = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (result.type === 'success') {
+        const mime = result.mimeType || 'application/octet-stream';
+        initiateUpload({
+          uri: result.uri,
+          name: result.name,
+          mimeType: mime,
+        });
+      }
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        console.error('Error picking document:', err);
+        Alert.alert('Error', 'Failed to pick document. Please try again.');
+      }
+    }
+  };
+
   useEffect(() => {
     loadData();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       loadData();
     });
-
-    // Set up real-time subscription for notes
     const notesChannel = supabase
       .channel('notes_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notes' },
-        () => {
-          loadData();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, () => {
+        loadData();
+      })
       .subscribe();
-
-    // Set up real-time subscription for documents
     const docsChannel = supabase
       .channel('documents_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'documents' },
-        () => {
-          loadData();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
+        loadData();
+      })
       .subscribe();
-
     return () => {
       subscription?.unsubscribe();
       supabase.removeChannel(notesChannel);
@@ -142,49 +171,29 @@ const HomeScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      console.log("Uploading file:", uri);
-      if (!FileSystem || !FileSystem.readAsStringAsync) {
-        throw new Error("FileSystem not available. Please restart the app.");
-      }
-
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: 'base64',
-      });
-
+      if (!user) throw new Error('User not authenticated');
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
       const filePath = `${user.id}/${new Date().getTime()}_${name}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(filePath, decode(base64), {
-          contentType: mimeType,
-          upsert: false
-        });
-
+        .upload(filePath, decode(base64), { contentType: mimeType, upsert: false });
       if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage
-        .from('documents')
-        .getPublicUrl(filePath);
-
+      const { data: publicUrlData } = supabase.storage.from('documents').getPublicUrl(filePath);
       const { error: dbError } = await supabase
         .from('documents')
         .insert({
           user_id: user.id,
-          name: name,
+          name,
           type: mimeType,
           url: publicUrlData.publicUrl,
-          size: base64.length // Approximate size
+          size: base64.length,
         });
-
       if (dbError) throw dbError;
-
-      Alert.alert("Success", "File uploaded successfully");
-      loadData(); // Refresh list
+      Alert.alert('Success', 'File uploaded successfully');
+      loadData();
     } catch (error) {
-      console.error("Upload failed:", error);
-      Alert.alert("Error", "Failed to upload file: " + error.message);
+      console.error('Upload failed:', error);
+      Alert.alert('Error', 'Failed to upload file: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -192,129 +201,47 @@ const HomeScreen = ({ navigation }) => {
 
   const initiateUpload = (file) => {
     setSelectedFile(file);
-    // Set default name without extension if possible, or just use the whole name
-    const nameWithoutExt = file.name ? file.name.split('.').slice(0, -1).join('.') : "Untitled";
-    setFileNameInput(nameWithoutExt || file.name || "Untitled");
-    setUploadModalVisible(false); // Close the selection modal
-    setNamingModalVisible(true); // Open the naming modal
+    const nameWithoutExt = file.name ? file.name.split('.').slice(0, -1).join('.') : 'Untitled';
+    setFileNameInput(nameWithoutExt || file.name || 'Untitled');
+    setUploadModalVisible(false);
+    setNamingModalVisible(true);
   };
 
   const handleSaveFile = async () => {
     if (!fileNameInput.trim()) {
-      Alert.alert("Error", "Please enter a file name");
+      Alert.alert('Error', 'Please enter a file name');
       return;
     }
-
     if (!selectedFile) return;
-
-    // Append original extension if missing (optional, but good practice)
     let finalName = fileNameInput;
-    const originalExt = selectedFile.name ? selectedFile.name.split('.').pop() : "";
+    const originalExt = selectedFile.name ? selectedFile.name.split('.').pop() : '';
     if (originalExt && !finalName.endsWith(`.${originalExt}`)) {
       finalName = `${finalName}.${originalExt}`;
     }
-
     setNamingModalVisible(false);
     await uploadFile(selectedFile.uri, finalName, selectedFile.mimeType);
     setSelectedFile(null);
-    setFileNameInput("");
+    setFileNameInput('');
   };
 
-  const handleGalleryPress = async () => {
-    try {
-      // Request permission to access the media library
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-        Alert.alert('Permission required', 'Sorry, we need camera roll permissions to select images.');
-        return;
-      }
-
-      // Launch the image library
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false, // Cropping removed
-        quality: 1,
-      });
-
-      if (!result.canceled) {
-        const asset = result.assets[0];
-        initiateUpload({
-          uri: asset.uri,
-          name: asset.fileName || `image_${Date.now()}.jpg`,
-          mimeType: asset.mimeType || 'image/jpeg'
-        });
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+  const handleDocumentPress = (doc) => {
+    if (doc?.url) {
+      Linking.openURL(doc.url).catch(err => console.error('Failed to open URL:', err));
     }
-  };
-
-  const handleDrivePress = async () => {
-    try {
-      // Open document picker for Google Drive
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-        multiple: false
-      });
-
-      if (result.type === 'success') {
-        initiateUpload({
-          uri: result.uri,
-          name: result.name,
-          mimeType: result.mimeType
-        });
-      }
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error('Error picking document:', err);
-        Alert.alert('Error', 'Failed to pick document. Please try again.');
-      }
-    }
-  };
-
-  const onLongPressNote = (note) => {
-    Alert.alert("Note Options", note.title, [
-      { text: "Edit", onPress: () => navigation.navigate("NoteEditor", note) },
-      { text: "Delete", style: "destructive", onPress: () => { } },
-      { text: "Share", onPress: () => { } },
-      { text: "Cancel", style: "cancel" },
-    ]);
   };
 
   const onLongPressDoc = (doc) => {
-    Alert.alert("Document Options", doc.name, [
-      { text: "Rename", onPress: () => { } },
-      { text: "Delete", style: "destructive", onPress: () => { } },
-      { text: "Share", onPress: () => { } },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    // placeholder for long press actions
   };
 
-  const handleDocumentPress = async (doc) => {
-    try {
-      if (doc.url) {
-        const supported = await Linking.canOpenURL(doc.url);
-        if (supported) {
-          await Linking.openURL(doc.url);
-        } else {
-          Alert.alert("Error", "Cannot open this file type");
-        }
-      } else {
-        Alert.alert("Error", "File URL not found");
-      }
-    } catch (error) {
-      console.error("Error opening document:", error);
-      Alert.alert("Error", "Failed to open document");
-    }
+  const onLongPressNote = (note) => {
+    // placeholder for long press actions
   };
 
   const activity = [
-    { id: 1, text: "Created Invoice #INV-001", time: "2h ago", icon: "doc" },
-    { id: 2, text: "Updated business profile", time: "1d ago", icon: "note" },
-    { id: 3, text: "Scanned receipt", time: "2d ago", icon: "scan" },
+    { id: 1, text: 'Created Invoice #INV-001', time: '2h ago', icon: 'doc' },
+    { id: 2, text: 'Updated business profile', time: '1d ago', icon: 'note' },
+    { id: 3, text: 'Scanned receipt', time: '2d ago', icon: 'scan' },
   ];
 
   return (
@@ -326,25 +253,21 @@ const HomeScreen = ({ navigation }) => {
       >
         <View style={styles.contentContainer}>
           <Header />
-
           <View style={styles.content}>
             <WelcomeCard />
-
             <NotesSection
               notes={notes}
               loading={loading}
-              onNotePress={(note) => navigation.navigate("NoteEditor", note)}
+              onNotePress={note => navigation.navigate('NoteEditor', note)}
               onNoteLongPress={onLongPressNote}
-              onViewAll={() => navigation.navigate("Notes")}
+              onViewAll={() => navigation.navigate('Notes')}
             />
-
             <DocumentsSection
               documents={documents}
               onDocumentPress={handleDocumentPress}
               onDocumentLongPress={onLongPressDoc}
-              onViewAll={() => console.log("View all documents")}
+              onViewAll={() => console.log('View all documents')}
             />
-
             <ActivitySection activities={activity} />
           </View>
         </View>
@@ -364,9 +287,9 @@ const HomeScreen = ({ navigation }) => {
       <CreateSheet
         visible={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        onNotePress={() => navigation.navigate("NoteEditor", { id: null })}
+        onNotePress={() => navigation.navigate('NoteEditor', { id: null })}
         onUploadPress={() => setUploadModalVisible(true)}
-        onScanPress={() => navigation.navigate("Scan")}
+        onScanPress={() => navigation.navigate('Scan')}
       />
 
       {/* Upload Modal */}
@@ -385,13 +308,12 @@ const HomeScreen = ({ navigation }) => {
         onRequestClose={() => setNamingModalVisible(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Name your file</Text>
             <Text style={styles.modalSubtitle}>Enter a name for this document</Text>
-
             <TextInput
               style={styles.input}
               value={fileNameInput}
@@ -400,7 +322,6 @@ const HomeScreen = ({ navigation }) => {
               autoFocus
               selectTextOnFocus
             />
-
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -411,7 +332,6 @@ const HomeScreen = ({ navigation }) => {
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.modalButton, styles.saveButton]}
                 onPress={handleSaveFile}
@@ -439,7 +359,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingBottom: 24, // Extra padding at the bottom
+    paddingBottom: 24,
   },
   content: {
     paddingHorizontal: 16,

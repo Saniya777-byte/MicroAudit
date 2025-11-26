@@ -146,8 +146,15 @@ export default function App() {
       try {
         if (!session?.user) return;
         const user = session.user;
-        const fullName = user.user_metadata?.full_name || null;
         const email = user.email || null;
+
+        // Ensure full_name satisfies length constraints
+        let fullName = user.user_metadata?.full_name;
+        if (!fullName || fullName.length < 2) {
+          fullName = email ? email.split('@')[0] : "User";
+          if (fullName.length < 2) fullName = "User";
+        }
+
         const { error } = await supabase
           .from("profiles")
           .upsert(
@@ -188,4 +195,3 @@ export default function App() {
     </NavigationContainer>
   );
 }
-
