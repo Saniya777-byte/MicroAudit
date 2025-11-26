@@ -41,16 +41,55 @@ export default function WorkspaceDetail({ route, navigation }) {
 
   const fetchTasks = async () => {
     try {
-      const { data, error } = await supabase
+      // First, fetch existing tasks
+      const { data: existingTasks, error: fetchError } = await supabase
         .from("tasks")
         .select("*")
         .eq("workspace_id", workspace.id)
         .order("created_at", { ascending: true });
 
-      if (error) throw error;
-      setTasks(data || []);
+      if (fetchError) throw fetchError;
+
+      // If no tasks exist, create default ones
+      if (!existingTasks || existingTasks.length === 0) {
+        const defaultTasks = {
+          'Personal': [
+            { title: "Plan weekend activities", done: false },
+            { title: "Buy groceries", done: true },
+            { title: "Call family", done: false }
+          ],
+          'Work': [
+            { title: "Prepare presentation", done: true },
+            { title: "Reply to client emails", done: false },
+            { title: "Team meeting at 2 PM", done: false }
+          ],
+          'Projects': [
+            { title: "Fix navigation bug", done: true },
+            { title: "Add new feature", done: false },
+            { title: "Update documentation", done: true }
+          ]
+        };
+
+        const workspaceTasks = defaultTasks[workspace.title] || defaultTasks['Personal'];
+        const tasksToInsert = workspaceTasks.map(task => ({
+          ...task,
+          workspace_id: workspace.id
+        }));
+
+        // Insert default tasks
+        const { data: insertedTasks, error: insertError } = await supabase
+          .from('tasks')
+          .insert(tasksToInsert)
+          .select();
+
+        if (insertError) throw insertError;
+        
+        setTasks(insertedTasks || []);
+      } else {
+        setTasks(existingTasks || []);
+      }
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      console.error("Error in fetchTasks:", error);
     }
   };
 
