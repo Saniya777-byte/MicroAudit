@@ -14,11 +14,24 @@ export default function ResourcesSection({ resources, onAdd }) {
                 </TouchableOpacity>
             </View>
             <View style={styles.imgGrid}>
-                {resources.images.map(img => (
-                    <TouchableOpacity key={img.id} onPress={() => Linking.openURL(img.uri)}>
-                        <Image source={{ uri: img.uri }} style={styles.img} />
-                    </TouchableOpacity>
-                ))}
+                {resources.images && resources.images.length > 0 ? (
+                    resources.images.map(img => (
+                        <View key={img.id} style={styles.imageContainer}>
+                            <Image 
+                                source={img.uri}
+                                style={styles.img}
+                                resizeMode="cover"
+                                onError={(e) => {
+                                    console.log('Image load error:', e.nativeEvent.error);
+                                }}
+                            />
+                        </View>
+                    ))
+                ) : (
+                    <View style={styles.noImagesContainer}>
+                        <Text style={styles.noImagesText}>No images available</Text>
+                    </View>
+                )}
             </View>
             <View style={{ marginTop: 8 }}>
                 {resources.links.map(l => (
@@ -33,8 +46,36 @@ export default function ResourcesSection({ resources, onAdd }) {
 }
 
 const styles = StyleSheet.create({
-    imgGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: 8 },
-    img: { width: 100, height: 100, borderRadius: 12, marginRight: 8, marginBottom: 8 },
+    imgGrid: { 
+        flexDirection: "row", 
+        flexWrap: "wrap", 
+        marginTop: 8,
+        marginRight: -8  // Compensate for the margin on the last item in the row
+    },
+    imageContainer: {
+        width: '33.33%',  // 3 items per row
+        paddingRight: 8,
+        paddingBottom: 8,
+        aspectRatio: 1,   // Keep images square
+    },
+    img: { 
+        width: '100%', 
+        height: '100%',
+        borderRadius: 12,
+        backgroundColor: '#f0f0f0',  // Fallback background color
+        borderWidth: 1,
+        borderColor: '#e0e0e0'
+    },
+    noImagesContainer: {
+        width: '100%',
+        padding: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    noImagesText: {
+        color: colors.muted,
+        fontSize: 14,
+    },
     linkCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: 12, padding: 12 },
     headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 24, marginBottom: 8 },
     addBtn: { paddingHorizontal: 12, paddingVertical: 4, backgroundColor: colors.primary + "20", borderRadius: 12 },

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { colors, spacing } from "../theme";
@@ -56,6 +56,8 @@ export default function WorkspaceDetail({ route, navigation }) {
 
   const fetchResources = async () => {
     try {
+      console.log('Fetching resources for workspace:', workspace.id, workspace.title);
+      
       const { data, error } = await supabase
         .from("workspace_resources")
         .select("*")
@@ -64,9 +66,57 @@ export default function WorkspaceDetail({ route, navigation }) {
 
       if (error) throw error;
 
-      const images = data.filter(r => r.type === 'image').map(r => ({ id: r.id, uri: r.url }));
-      const links = data.filter(r => r.type === 'link').map(r => ({ id: r.id, title: r.title, url: r.url }));
+      let images = [];
+      let links = [];
 
+      if (data && data.length > 0) {
+        console.log('Found existing resources:', data);
+        // Use existing resources if available
+        images = data.filter(r => r.type === 'image').map(r => ({ 
+          id: r.id, 
+          uri: r.url,
+          type: 'image'
+        }));
+        links = data.filter(r => r.type === 'link').map(r => ({ 
+          id: r.id, 
+          title: r.title, 
+          url: r.url,
+          type: 'link'
+        }));
+      } else {
+        console.log('No resources found, using default images');
+        // Add default images from local assets
+        const defaultImages = {
+          'Personal': [
+            require('../../assets/pic1.jpg'),
+            require('../../assets/pic2.jpg'),
+            require('../../assets/pic3.jpg')
+          ],
+          'Work': [
+            require('../../assets/pic1.jpg'),
+            require('../../assets/pic2.jpg'),
+            require('../../assets/pic3.jpg')
+          ],
+          'Projects': [
+            require('../../assets/pic1.jpg'),
+            require('../../assets/pic2.jpg'),
+            require('../../assets/pic3.jpg')
+          ]
+        };
+
+        // Use workspace title to get the appropriate images
+        const workspaceImages = defaultImages[workspace.title] || defaultImages['Personal'];
+        console.log('Using default images:', workspaceImages);
+        
+        images = workspaceImages.map((img, index) => ({
+          id: `default-${workspace.id}-${index}`,
+          uri: img,  // Directly use the required image
+          type: 'image',
+          isDefault: true
+        }));
+      }
+
+      console.log('Setting resources:', { images, links });
       setResources({ images, links });
     } catch (error) {
       console.error("Error fetching resources:", error);
