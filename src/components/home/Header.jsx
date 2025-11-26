@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, StatusBar, Platform } from 'react-native';
 import { Bell, Settings } from 'lucide-react-native';
 
-// Get status bar height based on platform
+
 const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight;
 
 const Header = () => (

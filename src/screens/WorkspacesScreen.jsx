@@ -34,7 +34,7 @@ export default function WorkspacesScreen({ navigation }) {
         const defaultWorkspaces = [
           { title: "Personal", icon: "Folder", color: "#DBEAFE" },
           { title: "Work", icon: "Briefcase", color: "#FDE68A" },
-          { title: "Projects", icon: "Layers", color: "#DCFCE7" }
+          { title: "Projects", icon: "Layers", color: "#f1cbbcff" }
         ];
         
         // Insert default workspaces
