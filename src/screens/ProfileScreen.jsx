@@ -97,7 +97,11 @@ export default function ProfileScreen({ navigation }) {
         {/* Profile Header */}
         <Card style={styles.card}>
           <View style={styles.headerRow}>
-            <Image source={{ uri: "https://placekitten.com/100/100" }} style={styles.avatar} />
+            <Image 
+              source={require('../../assets/dp.png')} 
+              style={styles.avatar}
+              resizeMode="cover"
+            />
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.name}>{profile?.full_name || "-"}</Text>
               <Text style={styles.email}>{profile?.email || "-"}</Text>
@@ -171,7 +175,20 @@ const styles = StyleSheet.create({
   // User info
   headerRow: { flexDirection: "row", alignItems: "center" },
   userRow: { flexDirection: "row", alignItems: "center" },
-  avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: "#E5E7EB" },
+  avatarContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#e1e4e8',
+    overflow: 'hidden',
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#e1e4e8',
+    overflow: 'hidden',
+  },
   name: { fontSize: fonts.h2, fontWeight: "700", color: colors.text },
   email: { color: colors.muted, marginTop: 2 },
   role: { color: colors.text, fontWeight: "600", marginTop: 2 },
