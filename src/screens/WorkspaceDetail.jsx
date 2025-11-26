@@ -15,6 +15,7 @@ import ResourcesSection from "../components/workspace/ResourcesSection";
 import TasksList from "../components/workspace/TasksList";
 import RecentActivity from "../components/workspace/RecentActivity";
 import AddToWorkspaceSheet from "../components/workspace/AddToWorkspaceSheet";
+import AddResourceSheet from "../components/workspace/AddResourceSheet";
 
 const mockNotes = [
   { id: "n1", title: "Sprint plan", preview: "Backlog grooming...", color: "#DBEAFE", tags: ["Work"], pinned: true },
@@ -24,17 +25,6 @@ const mockDocs = [
   { id: "d1", name: "Invoice_1234.pdf", updated: "2d ago" },
   { id: "d2", name: "Contract.pdf", updated: "5d ago" },
 ];
-const mockResources = {
-  images: [
-    { id: "img1", uri: "https://picsum.photos/200/200?1" },
-    { id: "img2", uri: "https://picsum.photos/200/200?2" },
-    { id: "img3", uri: "https://picsum.photos/200/200?3" },
-  ],
-  links: [
-    { id: "l1", title: "Design System", url: "https://shadcn.com" },
-    { id: "l2", title: "Docs", url: "https://reactnative.dev" },
-  ],
-};
 const mockActivity = [
   { id: "a1", text: "Added document \"Invoice_1234.pdf\"", time: "3h ago", icon: "doc" },
   { id: "a2", text: "Created note \"Sprint plan\"", time: "1d ago", icon: "note" },
@@ -46,6 +36,8 @@ export default function WorkspaceDetail({ route, navigation }) {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [resourceSheetOpen, setResourceSheetOpen] = useState(false);
+  const [resources, setResources] = useState({ images: [], links: [] });
 
   const fetchTasks = async () => {
     try {
@@ -62,10 +54,30 @@ export default function WorkspaceDetail({ route, navigation }) {
     }
   };
 
+  const fetchResources = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("workspace_resources")
+        .select("*")
+        .eq("workspace_id", workspace.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const images = data.filter(r => r.type === 'image').map(r => ({ id: r.id, uri: r.url }));
+      const links = data.filter(r => r.type === 'link').map(r => ({ id: r.id, title: r.title, url: r.url }));
+
+      setResources({ images, links });
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (workspace.id) {
         fetchTasks();
+        fetchResources();
       }
     }, [workspace.id])
   );
@@ -168,6 +180,31 @@ export default function WorkspaceDetail({ route, navigation }) {
     }
   };
 
+  const addResource = async (resource) => {
+    try {
+      const { data, error } = await supabase
+        .from("workspace_resources")
+        .insert([
+          {
+            workspace_id: workspace.id,
+            type: resource.type,
+            title: resource.title,
+            url: resource.type === 'image' ? resource.uri : resource.url // For images, we are using URI as URL for now
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Optimistic update or refetch
+      fetchResources();
+    } catch (error) {
+      console.error("Error adding resource:", error);
+      Alert.alert("Error", "Failed to add resource");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <WorkspaceHeader navigation={navigation} workspace={workspace} />
@@ -181,7 +218,10 @@ export default function WorkspaceDetail({ route, navigation }) {
 
         <DocumentsList docs={mockDocs} navigation={navigation} />
 
-        <ResourcesSection resources={mockResources} />
+        <ResourcesSection
+          resources={resources}
+          onAdd={() => setResourceSheetOpen(true)}
+        />
 
         <TasksList
           tasks={tasks}
@@ -205,6 +245,12 @@ export default function WorkspaceDetail({ route, navigation }) {
         visible={sheetOpen}
         onClose={() => setSheetOpen(false)}
         navigation={navigation}
+      />
+
+      <AddResourceSheet
+        visible={resourceSheetOpen}
+        onClose={() => setResourceSheetOpen(false)}
+        onAdd={addResource}
       />
     </SafeAreaView>
   );
