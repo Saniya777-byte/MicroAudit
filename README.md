@@ -15,16 +15,20 @@
 </div>
 
 ---
+##Demo Video
+https://drive.google.com/file/d/165Lbe91xmxTCiRH2RVfd1Wb-_fR_7ula/view?usp=drivesdk
 
-## 🚀 Real-World Problem
+---
+
+##  Real-World Problem
 
 Small businesses, freelancers, and entrepreneurs deal with many recurring tasks, documents, bills, and resources. But most of them still manage work using:
 
-- ❌ Scattered WhatsApp chats  
-- ❌ Random notes or paper diaries  
-- ❌ Unorganized folders  
-- ❌ No reminders for renewals or deadlines  
-- ❌ No proper workspace separation  
+-  Scattered WhatsApp chats  
+-  Random notes or paper diaries  
+-  Unorganized folders  
+-  No reminders for renewals or deadlines  
+-  No proper workspace separation  
 
 This leads to lost documents, missed deadlines, and zero visibility on progress.
 
@@ -46,9 +50,9 @@ It helps individuals and small teams avoid chaos and stay audit-ready at all tim
 
 ---
 
-# 🎯 Core Features
+#  Core Features
 
-## 🔐 1. Authentication System
+##  1. Authentication System
 - Email/password login  
 - Secure session management  
 - Supabase Auth integration  
@@ -57,7 +61,7 @@ It helps individuals and small teams avoid chaos and stay audit-ready at all tim
 
 ---
 
-## 🗂️ 2. Workspace Management
+##  2. Workspace Management
 Create separate spaces for personal, work, or client-based projects.
 
 **Workspace Features:**
@@ -69,7 +73,7 @@ Create separate spaces for personal, work, or client-based projects.
 
 ---
 
-## 📝 3. Task Management
+##  3. Task Management
 - Add, edit, delete tasks  
 - Mark tasks complete/incomplete  
 - Due dates  
@@ -79,7 +83,7 @@ Create separate spaces for personal, work, or client-based projects.
 
 ---
 
-## 📄 4. Document Management
+##  4. Document Management
 - Upload PDFs, images, and files  
 - View all documents per workspace  
 - Store file metadata  
@@ -87,7 +91,7 @@ Create separate spaces for personal, work, or client-based projects.
 
 ---
 
-## 🖼️ 5. Resource Management
+##  5. Resource Management
 - Upload images  
 - Save and preview external links  
 - Grid-based UI  
@@ -95,7 +99,7 @@ Create separate spaces for personal, work, or client-based projects.
 
 ---
 
-# 🧱 Technical Overview
+#  Technical Overview
 
 ## 📱 Frontend
 - React Native  
@@ -184,4 +188,5 @@ Everything related to each project or workspace stays **together in one place**.
 Currently in **active development**.
 
 ---
+
 
